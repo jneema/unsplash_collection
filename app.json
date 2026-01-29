@@ -2,6 +2,7 @@
   "expo": {
     "name": "unsplash_collection",
     "slug": "unsplash_collection",
+    "scheme": "unsplashcollection",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
