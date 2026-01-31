@@ -7,7 +7,7 @@ export default function TabsLayout() {
   if (Platform.OS === 'ios') {
     return (
       <NativeTabs disableTransparentOnScrollEdge={false}>
-        <NativeTabs.Trigger name="home">
+        <NativeTabs.Trigger name="index">
           <Label>Home</Label>
           <Icon sf={{ default: 'house', selected: 'house.fill' }} />
         </NativeTabs.Trigger>
@@ -32,7 +32,7 @@ export default function TabsLayout() {
       }}
     >
       <Tabs.Screen
-        name="home"
+        name="index"
         options={{
           title: "Home",
           tabBarIcon: ({ color, size }) => (
