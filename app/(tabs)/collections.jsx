@@ -30,6 +30,26 @@ const COLLECTIONS_DATA = [
       "https://images.unsplash.com/photo-1502602898657-3e91760cbb34?w=200",
     ],
   },
+  {
+    id: "3",
+    title: "Street Photography",
+    count: "850 photos",
+    images: [
+      "https://images.unsplash.com/photo-1494438639946-1ebd1d20bf85?w=400",
+      "https://images.unsplash.com/photo-1505691938895-1758d7eaa511?w=200",
+      "https://images.unsplash.com/photo-1513694203232-719a280e022f?w=200",
+    ],
+  },
+  {
+    id: "4",
+    title: "Street Photography",
+    count: "850 photos",
+    images: [
+      "https://images.unsplash.com/photo-1514924013411-cbf25faa35bb?w=400",
+      "https://images.unsplash.com/photo-1477959858617-67f85cf4f1df?w=200",
+      "https://images.unsplash.com/photo-1502602898657-3e91760cbb34?w=200",
+    ],
+  },
 ];
 
 // Reusable Collection Card
