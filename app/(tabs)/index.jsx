@@ -7,14 +7,12 @@ import {
   Image,
   Dimensions,
   TouchableOpacity,
-  KeyboardAvoidingView,
-  Platform,
   Keyboard,
-  TouchableWithoutFeedback,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
+import { useRouter } from "expo-router";
 
 const { width } = Dimensions.get("window");
 const COLUMN_WIDTH = (width - 60) / 2;
@@ -33,14 +31,21 @@ const BLOB_DATA = [
 export default function Home() {
   const [query, setQuery] = useState("");
   const [isSearching, setIsSearching] = useState(false);
-  const [results, setResults] = useState([]); // Empty array initially
+  const [results, setResults] = useState([]);
+
+  const router = useRouter();
+
+  const handlePress = (item) => {
+    const path = `/photos/${item.id}?url=${encodeURIComponent(item.url)}`;
+    console.log(path);
+    router.push(path);
+  };
 
   const handleSearch = () => {
     if (query.trim().length === 0) return;
     Keyboard.dismiss();
     setIsSearching(true);
 
-    // MOCK LOGIC: Simulate finding results or not
     if (query.toLowerCase() === "nothing") {
       setResults([]);
     } else {
@@ -146,13 +151,13 @@ export default function Home() {
               returnKeyType="search"
               style={{
                 height: 48,
-                fontSize: 18, 
-                fontWeight: "600", 
-                textAlignVertical: "center", 
+                fontSize: 18,
+                fontWeight: "600",
+                textAlignVertical: "center",
                 paddingTop: 0,
                 paddingBottom: 0,
-                includeFontPadding: false, 
-                lineHeight: 22, 
+                includeFontPadding: false,
+                lineHeight: 22,
               }}
             />
             <TouchableOpacity onPress={handleSearch}>
@@ -195,13 +200,17 @@ export default function Home() {
               }}
               columnWrapperStyle={{ justifyContent: "space-between" }}
               renderItem={({ item }) => (
-                <View className="mb-4">
+                <TouchableOpacity
+                  className="mb-4"
+                  activeOpacity={0.9}
+                  onPress={() => handlePress(item)}
+                >
                   <Image
                     source={{ uri: item.url }}
                     style={{ width: COLUMN_WIDTH, height: 260 }}
                     className="rounded-[32px] bg-slate-100 dark:bg-slate-800"
                   />
-                </View>
+                </TouchableOpacity>
               )}
             />
           ) : (

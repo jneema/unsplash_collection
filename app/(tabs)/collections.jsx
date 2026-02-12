@@ -3,7 +3,6 @@ import {
   Text,
   View,
   FlatList,
-  Image,
   TouchableOpacity,
   Modal,
   TextInput,
@@ -13,6 +12,8 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { StatusBar } from "expo-status-bar";
+import { useRouter } from "expo-router";
+import CollectionCard from "../../components/collection_card";
 
 const INITIAL_DATA = [
   {
@@ -37,30 +38,8 @@ const INITIAL_DATA = [
   },
 ];
 
-const CollectionCard = ({ item }) => (
-  <TouchableOpacity activeOpacity={0.9} className="mb-8">
-    <View className="flex-row h-48 w-full overflow-hidden rounded-[32px] bg-slate-100 dark:bg-slate-800 border border-transparent dark:border-slate-800">
-      <Image source={{ uri: item.images[0] }} className="flex-1 h-full mr-1" />
-      <View className="w-1/3">
-        <Image
-          source={{ uri: item.images[1] }}
-          className="flex-1 h-full mb-1"
-        />
-        <Image source={{ uri: item.images[2] }} className="flex-1 h-full" />
-      </View>
-    </View>
-    <View className="mt-4 px-1">
-      <Text className="text-xl font-bold text-slate-900 dark:text-slate-100">
-        {item.title}
-      </Text>
-      <Text className="text-sm text-slate-500 dark:text-slate-400 font-medium mt-0.5">
-        {item.count}
-      </Text>
-    </View>
-  </TouchableOpacity>
-);
-
 export default function Collections() {
+  const router = useRouter();
   const [collections, setCollections] = useState(INITIAL_DATA);
   const [modalVisible, setModalVisible] = useState(false);
   const [newTitle, setNewTitle] = useState("");
@@ -88,16 +67,27 @@ export default function Collections() {
     setModalVisible(false);
   };
 
+  const handlePress = (item) => {
+    console.log(item);
+    router.push(`/collections/${item.id}`);
+  };
+
   return (
     <SafeAreaView className="flex-1 bg-white dark:bg-slate-950">
       <StatusBar style="auto" />
       <FlatList
         data={collections}
         keyExtractor={(item) => item.id}
-        renderItem={({ item }) => <CollectionCard item={item} />}
+        renderItem={({ item }) => (
+          <CollectionCard
+            item={item}
+            onPress={() => {
+              handlePress(item);
+            }}
+          />
+        )}
         ListHeaderComponent={() => (
           <View className="items-center w-full mt-4 mb-8">
-            {/* ANDROID CLIP FIX: Added py-2 and leading */}
             <Text className="text-5xl font-black text-slate-900 dark:text-slate-50 mb-2 text-center py-2 leading-[56px]">
               Collections
             </Text>
@@ -132,7 +122,7 @@ export default function Collections() {
         showsVerticalScrollIndicator={false}
       />
 
-      <Modal animationType="slide" transparent={true} visible={modalVisible}>
+      <Modal transparent={true} visible={modalVisible}>
         <KeyboardAvoidingView
           behavior={Platform.OS === "ios" ? "padding" : "height"}
           className="flex-1 justify-end bg-black/60"
@@ -154,16 +144,9 @@ export default function Collections() {
             </View>
 
             <TextInput
-              className={`bg-slate-50 dark:bg-slate-800 px-5 py-6 rounded-2xl text-xl mb-8 text-slate-900 dark:text-slate-100 font-semibold border-2 ${
-                hasError
-                  ? "border-red-500"
-                  : isFocused
-                    ? "border-slate-900 dark:border-blue-500"
-                    : "border-slate-100 dark:border-slate-800"
-              }`}
-              style={{ minHeight: 75 }}
               placeholder="Title..."
               placeholderTextColor="#94a3b8"
+              className="bg-slate-50 dark:bg-slate-800 px-5 py-6 rounded-2xl text-xl mb-8 text-slate-900 dark:text-slate-100 font-semibold border-1"
               value={newTitle}
               onChangeText={(text) => {
                 setNewTitle(text);
@@ -172,9 +155,24 @@ export default function Collections() {
               onFocus={() => setIsFocused(true)}
               onBlur={() => setIsFocused(false)}
               autoFocus
-              autoCapitalize="sentences"
-              selectionColor="#3b82f6"
+              style={{
+                height: 48,
+                fontSize: 18,
+                fontWeight: "600",
+                textAlignVertical: "center",
+                paddingTop: 0,
+                paddingBottom: 0,
+                includeFontPadding: false,
+                lineHeight: 22,
+                borderColor: hasError
+                  ? "#ef4444"
+                  : isFocused
+                    ? "#0f172a"
+                    : "#f1f5f9",
+                borderWidth: 1,
+              }}
             />
+
             <TouchableOpacity
               onPress={handleCreateCollection}
               activeOpacity={0.8}
