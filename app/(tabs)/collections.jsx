@@ -12,6 +12,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
+import { StatusBar } from "expo-status-bar";
 
 const INITIAL_DATA = [
   {
@@ -38,7 +39,7 @@ const INITIAL_DATA = [
 
 const CollectionCard = ({ item }) => (
   <TouchableOpacity activeOpacity={0.9} className="mb-8">
-    <View className="flex-row h-48 w-full overflow-hidden rounded-3xl bg-slate-100">
+    <View className="flex-row h-48 w-full overflow-hidden rounded-[32px] bg-slate-100 dark:bg-slate-800 border border-transparent dark:border-slate-800">
       <Image source={{ uri: item.images[0] }} className="flex-1 h-full mr-1" />
       <View className="w-1/3">
         <Image
@@ -48,9 +49,13 @@ const CollectionCard = ({ item }) => (
         <Image source={{ uri: item.images[2] }} className="flex-1 h-full" />
       </View>
     </View>
-    <View className="mt-3 px-1">
-      <Text className="text-xl font-bold text-slate-900">{item.title}</Text>
-      <Text className="text-sm text-slate-500 font-medium">{item.count}</Text>
+    <View className="mt-4 px-1">
+      <Text className="text-xl font-bold text-slate-900 dark:text-slate-100">
+        {item.title}
+      </Text>
+      <Text className="text-sm text-slate-500 dark:text-slate-400 font-medium mt-0.5">
+        {item.count}
+      </Text>
     </View>
   </TouchableOpacity>
 );
@@ -61,13 +66,12 @@ export default function Collections() {
   const [newTitle, setNewTitle] = useState("");
   const [isFocused, setIsFocused] = useState(false);
   const [hasError, setHasError] = useState(false);
+
   const handleCreateCollection = () => {
-    // FIX: Added return statement so empty collections aren't created
     if (newTitle.trim().length === 0) {
       setHasError(true);
       return;
     }
-
     const newCollection = {
       id: Date.now().toString(),
       title: newTitle,
@@ -78,7 +82,6 @@ export default function Collections() {
         "https://images.unsplash.com/photo-1557683311-eac922347aa1?w=200",
       ],
     };
-
     setCollections([newCollection, ...collections]);
     setHasError(false);
     setNewTitle("");
@@ -86,19 +89,21 @@ export default function Collections() {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-white">
+    <SafeAreaView className="flex-1 bg-white dark:bg-slate-950">
+      <StatusBar style="auto" />
       <FlatList
         data={collections}
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => <CollectionCard item={item} />}
         ListHeaderComponent={() => (
           <View className="items-center w-full mt-4 mb-8">
-            <Text className="text-5xl font-black text-slate-900 mb-2 text-center">
+            {/* ANDROID CLIP FIX: Added py-2 and leading */}
+            <Text className="text-5xl font-black text-slate-900 dark:text-slate-50 mb-2 text-center py-2 leading-[56px]">
               Collections
             </Text>
-            <Text className="text-lg text-slate-500 text-center leading-6">
+            <Text className="text-lg text-slate-500 dark:text-slate-400 text-center leading-6">
               Explore the world through collections under the{" "}
-              <Text className="font-bold underline text-slate-700">
+              <Text className="font-bold underline text-slate-700 dark:text-slate-300">
                 Unsplash license.
               </Text>
             </Text>
@@ -108,12 +113,17 @@ export default function Collections() {
           <TouchableOpacity
             onPress={() => setModalVisible(true)}
             activeOpacity={0.7}
-            className="mb-12 border-2 border-dashed border-slate-200 rounded-3xl h-48 items-center justify-center bg-slate-50/30"
+            className="mb-12 border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-[32px] h-48 items-center justify-center bg-slate-50/30 dark:bg-slate-900/20"
           >
-            <View className="bg-white p-3 rounded-full shadow-sm mb-2 border border-slate-100">
-              <Ionicons name="add-outline" size={28} color="#0f172a" />
+            <View className="bg-white dark:bg-slate-800 p-3 rounded-full shadow-sm mb-2 border border-slate-100 dark:border-slate-700">
+              <Ionicons
+                name="add-outline"
+                size={28}
+                color={Platform.OS === "ios" ? "#0f172a" : "#94a3b8"}
+                className="dark:text-slate-200"
+              />
             </View>
-            <Text className="text-slate-600 font-bold text-lg">
+            <Text className="text-slate-600 dark:text-slate-400 font-bold text-lg">
               Add New Collection
             </Text>
           </TouchableOpacity>
@@ -122,43 +132,38 @@ export default function Collections() {
         showsVerticalScrollIndicator={false}
       />
 
-      <Modal
-        animationType="slide"
-        transparent={true}
-        visible={modalVisible}
-        onRequestClose={() => setModalVisible(false)}
-      >
+      <Modal animationType="slide" transparent={true} visible={modalVisible}>
         <KeyboardAvoidingView
           behavior={Platform.OS === "ios" ? "padding" : "height"}
-          className="flex-1 justify-end bg-black/40"
+          className="flex-1 justify-end bg-black/60"
         >
-          <View className="bg-white rounded-[40px] p-8 pb-10 mx-4 mb-10 shadow-2xl relative">
+          <View className="bg-white dark:bg-slate-900 rounded-[40px] p-8 pb-10 mx-4 mb-10 shadow-2xl relative border border-transparent dark:border-slate-800">
             <TouchableOpacity
               onPress={() => setModalVisible(false)}
-              className="absolute top-6 right-6 z-10 bg-slate-50 p-2 rounded-full"
+              className="absolute top-6 right-6 z-10 bg-slate-50 dark:bg-slate-800 p-2 rounded-full"
             >
               <Ionicons name="close" size={20} color="#94a3b8" />
             </TouchableOpacity>
 
-            <View className="w-12 h-1 bg-slate-100 rounded-full self-center mb-5" />
+            <View className="w-12 h-1 bg-slate-100 dark:bg-slate-800 rounded-full self-center mb-5" />
 
             <View className="items-center mb-5">
-              <Text className="text-3xl font-black text-slate-900 tracking-tight">
+              <Text className="text-3xl font-black text-slate-900 dark:text-slate-50 tracking-tight">
                 Add Collection
               </Text>
             </View>
 
             <TextInput
-              className={`bg-slate-50 px-5 py-6 rounded-2xl text-xl mb-8 text-slate-900 font-semibold border-2 ${
+              className={`bg-slate-50 dark:bg-slate-800 px-5 py-6 rounded-2xl text-xl mb-8 text-slate-900 dark:text-slate-100 font-semibold border-2 ${
                 hasError
                   ? "border-red-500"
                   : isFocused
-                    ? "border-slate-900"
-                    : "border-slate-100"
+                    ? "border-slate-900 dark:border-blue-500"
+                    : "border-slate-100 dark:border-slate-800"
               }`}
-              style={{ minHeight: 70 }}
+              style={{ minHeight: 75 }}
               placeholder="Title..."
-              placeholderTextColor="#cbd5e1"
+              placeholderTextColor="#94a3b8"
               value={newTitle}
               onChangeText={(text) => {
                 setNewTitle(text);
@@ -168,14 +173,14 @@ export default function Collections() {
               onBlur={() => setIsFocused(false)}
               autoFocus
               autoCapitalize="sentences"
-              selectionColor="#0f172a"
+              selectionColor="#3b82f6"
             />
             <TouchableOpacity
               onPress={handleCreateCollection}
               activeOpacity={0.8}
-              className="bg-slate-900 h-16 rounded-2xl items-center justify-center flex-row"
+              className="bg-slate-900 dark:bg-blue-600 h-16 rounded-2xl items-center justify-center flex-row"
             >
-              <Text className="text-white font-bold text-lg mr-2">
+              <Text className="text-white font-bold text-lg">
                 Create Collection
               </Text>
               <Ionicons name="add" size={20} color="white" />
