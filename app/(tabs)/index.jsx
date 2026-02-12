@@ -3,12 +3,12 @@ import {
   Text, 
   View, 
   TextInput, 
-  SafeAreaView, 
   KeyboardAvoidingView, 
   Platform,
   TouchableWithoutFeedback,
   Keyboard 
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 const BLOB_DATA = [
   { style: "left-8 top-24 w-20 h-32 bg-blue-100 opacity-30" },

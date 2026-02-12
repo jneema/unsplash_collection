@@ -15,6 +15,10 @@ export default function TabLayout() {
         />
         <Badge>3</Badge>
       </NativeTabs.Trigger>
+      <NativeTabs.Trigger name="settings">
+        <Label>Settings</Label>
+        <Icon sf="gearshape.fill" drawable="ic_menu_settings" />
+      </NativeTabs.Trigger>
     </NativeTabs>
   );
 }

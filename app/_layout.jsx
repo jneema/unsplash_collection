@@ -1,15 +1,18 @@
-import  "./global.css";
+import "./global.css";
 import { Stack } from "expo-router";
+import { AppThemeProvider } from "../theme/AppThemeProvider";
 
 const RootLayout = () => {
   return (
-    <Stack
-      screenOptions={{
-        headerShown: false,
-      }}
-    >
-      <Stack.Screen name="(tabs)" />
-    </Stack>
+    <AppThemeProvider>
+      <Stack
+        screenOptions={{
+          headerShown: false,
+        }}
+      >
+        <Stack.Screen name="(tabs)" />
+      </Stack>
+    </AppThemeProvider>
   );
 };
 
