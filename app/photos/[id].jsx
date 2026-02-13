@@ -42,7 +42,7 @@ export default function PhotoDetail() {
         const data = await getPhotoDetails(id);
         setPhoto(data);
       } catch (err) {
-        console.log("Fetch Error:", err);
+        console.err("Fetch Error:", err);
       } finally {
         setLoading(false);
       }
@@ -71,7 +71,7 @@ export default function PhotoDetail() {
   };
 
   const handleDownload = async () => {
-    if (isDownloading) return; // Prevent multiple clicks
+    if (isDownloading) return;
 
     setIsDownloading(true);
     try {
@@ -98,11 +98,9 @@ export default function PhotoDetail() {
       // 4. Save to Gallery
       if (downloadResult && downloadResult.uri) {
         const x = trackPhotoDownload(photo);
-        console.log(x)
 
         await MediaLibrary.saveToLibraryAsync(downloadResult.uri);
 
-        // Success Alert with custom button
         Alert.alert(
           "Saved!",
           "The high-resolution photo is now in your gallery.",

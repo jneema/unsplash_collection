@@ -33,3 +33,32 @@ export const trackPhotoDownload = async (photo) => {
     download_location: photo.links.download_location,
   });
 };
+
+export const getCollections = async () => {
+  const response = await api.get('/api/collections');
+  return response.data;
+};
+
+export const createCollection = async (name) => {
+  const response = await api.post('/api/collections', { name });
+  return response.data;
+};
+
+export const getCollectionImages = async (collectionId) => {
+  const response = await api.get(`/api/collections/${collectionId}/images`);
+  return response.data;
+};
+
+export const addImageToCollection = async (collectionId, photoData) => {
+  try {
+    const response = await api.post(`/api/collections/${collectionId}/images`, {
+      unsplash_id: photoData.unsplash_id,
+      image_url: photoData.image_url,
+      download_location: photoData.download_location
+    });
+    return response.data;
+  } catch (error) {
+    console.error("API Error adding image:", error.response?.data || error.message);
+    throw error;
+  }
+};

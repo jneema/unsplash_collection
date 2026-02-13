@@ -1,23 +1,8 @@
 import React, { useState } from "react";
-import {
-  Text,
-  View,
-  TextInput,
-  FlatList,
-  Image,
-  Dimensions,
-  TouchableOpacity,
-  Keyboard,
-  ActivityIndicator,
-} from "react-native";
+import { Text, View, TextInput, TouchableOpacity } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
-import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
-import { search } from "../../api/unsplash_collection";
-
-const { width } = Dimensions.get("window");
-const COLUMN_WIDTH = (width - 60) / 2;
 
 const BLOB_DATA = [
   {
@@ -32,113 +17,57 @@ const BLOB_DATA = [
 
 export default function Home() {
   const router = useRouter();
-  const [query, setQuery] = useState("");
-  const [isSearching, setIsSearching] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const [results, setResults] = useState([]);
-  const [page, setPage] = useState(1);
-  const [loadingMore, setLoadingMore] = useState(false);
-
-  const handlePress = (item) => {
-    const path = `/photos/${item.id}`;
-    console.log(path);
-    router.push(path);
+  const [query, setQuery] = useState(null);
+  const handleSearch = (query) => {
+    router.push(`/search?query=${encodeURIComponent(query)}`);
   };
 
-  const reset = () => {
-    setIsSearching(false);
-    setQuery("");
-    setResults([]);
+  const handleSubmit = () => {
+    if (query.trim()) {
+      handleSearch(query.trim());
+    }
   };
 
-  const handleSearch = async (isNewSearch = true) => {
-    const searchQuery = query.trim();
-    if (searchQuery.length === 0) return;
-
-    Keyboard.dismiss();
-
-    setIsSearching(true);
-
-    if (isNewSearch) {
-      setResults([]);
-      setPage(1);
-      setIsLoading(true);
-    } else {
-      setLoadingMore(true);
-    }
-
-    try {
-      const data = await search(searchQuery, isNewSearch ? 1 : page + 1);
-      const newPhotos = data.results || [];
-
-      setResults((prev) => (isNewSearch ? newPhotos : [...prev, ...newPhotos]));
-      if (!isNewSearch) setPage((prev) => prev + 1);
-    } catch (err) {
-      console.log("Search Error:", err);
-    } finally {
-      setIsLoading(false);
-      setLoadingMore(false);
-    }
+  const handleTagPress = (tag) => {
+    router.push(`/search?query=${encodeURIComponent(tag)}`);
   };
 
   return (
     <View className="flex-1 bg-white dark:bg-slate-950">
-      {/* --- HEADER SECTION --- */}
-      {!isSearching ? (
-        <View className="absolute inset-0" pointerEvents="none">
-          {BLOB_DATA.map((blob, i) => (
-            <View
-              key={i}
-              className={`absolute rounded-full blur-[80px] ${blob.style}`}
-            />
-          ))}
-        </View>
-      ) : (
-        <View className="h-40 w-full relative">
-          <LinearGradient
-            colors={["#fbc2eb", "#a6c1ee"]}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 0 }}
-            className="absolute inset-0"
-          />
-        </View>
-      )}
-
-      <SafeAreaView
-        className={isSearching ? "absolute top-0 w-full z-10" : "flex-1"}
-      >
-        <View
-          className={isSearching ? "px-6 pt-2" : "flex-1 justify-center px-6"}
-        >
-          {!isSearching && (
-            <View className="items-center w-full mb-10">
-              <Text
-                className="text-6xl font-black text-slate-900 dark:text-slate-50 mb-2 py-2 tracking-tighter text-center leading-[72px]"
-                style={{ lineHeight: 64 }}
-              >
-                Search
-              </Text>
-              <Text className="text-lg font-medium text-slate-400 dark:text-slate-500 text-center px-4">
-                Discover high-resolution images from Unsplash
-              </Text>
-            </View>
-          )}
-
+      <View className="absolute inset-0" pointerEvents="none">
+        {BLOB_DATA.map((blob, i) => (
           <View
-            className={`flex-row items-center bg-white dark:bg-slate-900 rounded-[28px] px-4 py-1.5 border-2 border-slate-100 dark:border-slate-800 shadow-2xl shadow-slate-300 dark:shadow-none`}
-          >
-            {isSearching && (
-              <TouchableOpacity onPress={reset} className="mr-2">
-                <Ionicons name="arrow-back" size={24} color="#94a3b8" />
-              </TouchableOpacity>
-            )}
+            key={i}
+            className={`absolute rounded-full blur-[80px] ${blob.style}`}
+          />
+        ))}
+      </View>
+
+      {/* Content */}
+      <SafeAreaView className="flex-1">
+        <View className="flex-1 justify-center px-6">
+          {/* Title */}
+          <View className="items-center w-full mb-10">
+            <Text
+              className="text-6xl font-black text-slate-900 dark:text-slate-50 mb-2 py-2 tracking-tighter text-center leading-[72px]"
+              style={{ lineHeight: 64 }}
+            >
+              Search
+            </Text>
+            <Text className="text-lg font-medium text-slate-400 dark:text-slate-500 text-center px-4">
+              Discover high-resolution images from Unsplash
+            </Text>
+          </View>
+
+          {/* Search Input */}
+          <View className="flex-row items-center bg-white dark:bg-slate-900 rounded-[28px] px-4 py-1.5 border-2 border-slate-100 dark:border-slate-800 shadow-2xl shadow-slate-300 dark:shadow-none">
             <TextInput
               placeholder="Nature in Finland..."
               placeholderTextColor="#94a3b8"
               className="flex-1 px-3 text-slate-800 dark:text-slate-100"
               value={query}
               onChangeText={setQuery}
-              onSubmitEditing={handleSearch}
+              onSubmitEditing={handleSubmit}
               returnKeyType="search"
               style={{
                 height: 48,
@@ -151,98 +80,60 @@ export default function Home() {
                 lineHeight: 22,
               }}
             />
-            <TouchableOpacity onPress={handleSearch}>
+            <TouchableOpacity onPress={handleSubmit}>
               <Ionicons name="search" size={24} color="#cbd5e1" />
             </TouchableOpacity>
           </View>
 
-          {!isSearching && (
-            <View className="flex-row mt-6 justify-center space-x-2">
-              {["Nature", "Architecture", "Travel"].map((tag) => (
+          {/* Quick Tags */}
+          <View className="mt-8 px-4">
+            <Text className="text-slate-400 dark:text-slate-500 font-bold text-sm uppercase tracking-widest mb-4 text-center">
+              Popular Categories
+            </Text>
+
+            <View className="flex-row flex-wrap justify-center gap-3">
+              {[
+                {
+                  name: "Nature",
+                  icon: "leaf-outline",
+                  color: "bg-emerald-50 dark:bg-emerald-900/20",
+                  textColor: "text-emerald-600",
+                },
+                {
+                  name: "Architecture",
+                  icon: "business-outline",
+                  color: "bg-blue-50 dark:bg-blue-900/20",
+                  textColor: "text-blue-600",
+                },
+                {
+                  name: "Travel",
+                  icon: "airplane-outline",
+                  color: "bg-orange-50 dark:bg-orange-900/20",
+                  textColor: "text-orange-600",
+                },
+              ].map((tag) => (
                 <TouchableOpacity
-                  key={tag}
-                  onPress={() => {
-                    setQuery(tag);
-                  }}
-                  className="bg-slate-100 dark:bg-slate-800 px-4 py-2 rounded-full"
+                  key={tag.name}
+                  onPress={() => handleTagPress(tag.name)}
+                  activeOpacity={0.7}
+                  className={`${tag.color} flex-row items-center px-6 py-3 rounded-2xl border border-white/50 dark:border-slate-800 shadow-sm`}
                 >
-                  <Text className="text-slate-500 dark:text-slate-400 font-bold text-xs">
-                    {tag}
+                  <Ionicons
+                    name={tag.icon}
+                    size={18}
+                    color={tag.textColor.replace("text-", "")}
+                  />
+                  <Text
+                    className={`${tag.textColor} font-extrabold text-base ml-2`}
+                  >
+                    {tag.name}
                   </Text>
                 </TouchableOpacity>
               ))}
             </View>
-          )}
+          </View>
         </View>
       </SafeAreaView>
-
-      {/* --- CONTENT SECTION --- */}
-      {isSearching && (
-        <View className="flex-1">
-          {isLoading ? (
-            <View className="flex-1 justify-center items-center">
-              <ActivityIndicator size="large" color="#a6c1ee" />
-            </View>
-          ) : results.length > 0 ? (
-            <FlatList
-              data={results}
-              numColumns={2}
-              keyExtractor={(item, index) => `${item.id}-${index}`}
-              contentContainerStyle={{
-                paddingHorizontal: 24,
-                paddingTop: 10,
-                paddingBottom: 40,
-              }}
-              columnWrapperStyle={{ justifyContent: "space-between" }}
-              renderItem={({ item }) => (
-                <TouchableOpacity
-                  className="mb-4"
-                  activeOpacity={0.9}
-                  onPress={() => handlePress(item)}
-                >
-                  <Image
-                    source={{ uri: item.urls.regular }}
-                    style={{ width: COLUMN_WIDTH, height: 260 }}
-                    className="rounded-[32px] bg-slate-100 dark:bg-slate-800"
-                  />
-                </TouchableOpacity>
-              )}
-              onEndReachedThreshold={0.5}
-              onEndReached={() => {
-                if (!loadingMore) handleSearch(false);
-              }}
-              ListFooterComponent={() =>
-                loadingMore ? (
-                  <ActivityIndicator size="small" color="#000" />
-                ) : null
-              }
-            />
-          ) : (
-            /* EMPTY / NOT FOUND STATE */
-            <View className="flex-1 items-center justify-center px-10 mb-20">
-              <View className="bg-slate-50 dark:bg-slate-900 p-8 rounded-full mb-6">
-                <Ionicons
-                  name="cloud-offline-outline"
-                  size={60}
-                  color="#cbd5e1"
-                />
-              </View>
-              <Text className="text-2xl font-bold text-slate-900 dark:text-slate-100 text-center">
-                No results found
-              </Text>
-              <Text className="text-slate-500 dark:text-slate-400 text-center mt-2 leading-6">
-                We couldn't find anything for "{query}". Try a different keyword
-                or check your spelling.
-              </Text>
-              <TouchableOpacity onPress={reset} className="mt-8">
-                <Text className="text-blue-500 font-bold text-lg">
-                  Clear Search
-                </Text>
-              </TouchableOpacity>
-            </View>
-          )}
-        </View>
-      )}
     </View>
   );
 }

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Text,
   View,
@@ -14,62 +14,57 @@ import { Ionicons } from "@expo/vector-icons";
 import { StatusBar } from "expo-status-bar";
 import { useRouter } from "expo-router";
 import CollectionCard from "../../components/collection_card";
-
-const INITIAL_DATA = [
-  {
-    id: "1",
-    title: "Minimalist Interiors",
-    count: "1.2k photos",
-    images: [
-      "https://images.unsplash.com/photo-1494438639946-1ebd1d20bf85?w=400",
-      "https://images.unsplash.com/photo-1505691938895-1758d7eaa511?w=200",
-      "https://images.unsplash.com/photo-1513694203232-719a280e022f?w=200",
-    ],
-  },
-  {
-    id: "2",
-    title: "Street Photography",
-    count: "850 photos",
-    images: [
-      "https://images.unsplash.com/photo-1514924013411-cbf25faa35bb?w=400",
-      "https://images.unsplash.com/photo-1477959858617-67f85cf4f1df?w=200",
-      "https://images.unsplash.com/photo-1502602898657-3e91760cbb34?w=200",
-    ],
-  },
-];
+import {
+  createCollection,
+  getCollections,
+} from "../../api/unsplash_collection";
 
 export default function Collections() {
   const router = useRouter();
-  const [collections, setCollections] = useState(INITIAL_DATA);
+  const [collections, setCollections] = useState([]);
   const [modalVisible, setModalVisible] = useState(false);
   const [newTitle, setNewTitle] = useState("");
   const [isFocused, setIsFocused] = useState(false);
   const [hasError, setHasError] = useState(false);
 
-  const handleCreateCollection = () => {
+  const fetchCollections = async () => {
+    try {
+      const data = await getCollections();
+      setCollections(data);
+      console.log(data);
+    } catch (err) {
+      console.error("Error");
+    }
+  };
+
+  useEffect(() => {
+    fetchCollections();
+  }, []);
+
+  const handleCreateCollection = async () => {
     if (newTitle.trim().length === 0) {
       setHasError(true);
       return;
     }
-    const newCollection = {
-      id: Date.now().toString(),
-      title: newTitle,
-      count: "0 photos",
-      images: [
-        "https://images.unsplash.com/photo-1481349518771-20055b2a7b24?w=400",
-        "https://images.unsplash.com/photo-1557683316-973673baf926?w=200",
-        "https://images.unsplash.com/photo-1557683311-eac922347aa1?w=200",
-      ],
-    };
-    setCollections([newCollection, ...collections]);
-    setHasError(false);
-    setNewTitle("");
-    setModalVisible(false);
+
+    try {
+      const savedCollection = await createCollection(newTitle);
+      setCollections([savedCollection, ...collections]);
+      setModalVisible(false);
+      setNewTitle("");
+
+      const url = `/search?collectionId=${savedCollection.id}&collectionName=${encodeURIComponent(savedCollection.name)}&query=${encodeURIComponent(savedCollection.name)}`;
+      console.log("Navigating to:", url);
+      router.push(url);
+    } catch (error) {
+      console.error(error);
+    }
   };
 
-  const handlePress = (item) => {
-    console.log(item);
-    router.push(`/collections/${item.id}`);
+  const handleAddPhotosToCollection = (collection) => {
+    const url = `/search?collectionId=${collection.id}&collectionName=${encodeURIComponent(collection.name)}&query=${encodeURIComponent(collection.name)}`;
+    console.log("Navigating to:", url);
+    router.push(url);
   };
 
   return (
@@ -81,9 +76,8 @@ export default function Collections() {
         renderItem={({ item }) => (
           <CollectionCard
             item={item}
-            onPress={() => {
-              handlePress(item);
-            }}
+            onPress={() => router.push(`/collections/${item.id}`)}
+            onAddPhotos={() => handleAddPhotosToCollection(item)}
           />
         )}
         ListHeaderComponent={() => (
