@@ -40,7 +40,7 @@ export default function Home() {
   const [loadingMore, setLoadingMore] = useState(false);
 
   const handlePress = (item) => {
-    const path = `/photos/${item.id}?url=${encodeURIComponent(item.url)}`;
+    const path = `/photos/${item.id}`;
     console.log(path);
     router.push(path);
   };
