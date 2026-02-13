@@ -8,11 +8,13 @@ import {
   Dimensions,
   TouchableOpacity,
   Keyboard,
+  ActivityIndicator,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
+import { search } from "../../api/unsplash_collection";
 
 const { width } = Dimensions.get("window");
 const COLUMN_WIDTH = (width - 60) / 2;
@@ -29,11 +31,13 @@ const BLOB_DATA = [
 ];
 
 export default function Home() {
+  const router = useRouter();
   const [query, setQuery] = useState("");
   const [isSearching, setIsSearching] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const [results, setResults] = useState([]);
-
-  const router = useRouter();
+  const [page, setPage] = useState(1);
+  const [loadingMore, setLoadingMore] = useState(false);
 
   const handlePress = (item) => {
     const path = `/photos/${item.id}?url=${encodeURIComponent(item.url)}`;
@@ -41,57 +45,46 @@ export default function Home() {
     router.push(path);
   };
 
-  const handleSearch = () => {
-    if (query.trim().length === 0) return;
-    Keyboard.dismiss();
-    setIsSearching(true);
-
-    if (query.toLowerCase() === "nothing") {
-      setResults([]);
-    } else {
-      setResults([
-        {
-          id: "1",
-          url: "https://images.unsplash.com/photo-1473448912268-2022ce9509d8?w=500",
-        },
-        {
-          id: "2",
-          url: "https://images.unsplash.com/photo-1511497584788-876760111969?w=500",
-        },
-        {
-          id: "3",
-          url: "https://images.unsplash.com/photo-1542273917363-3b1817f69a2d?w=500",
-        },
-        {
-          id: "4",
-          url: "https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=500",
-        },
-        {
-          id: "5",
-          url: "https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=500",
-        },
-        {
-          id: "6",
-          url: "https://images.unsplash.com/photo-1494526585095-c41746248156?w=500",
-        },
-        {
-          id: "7",
-          url: "https://images.unsplash.com/photo-1500534623283-312aade485b7?w=500",
-        },
-      ]);
-    }
-  };
-
   const reset = () => {
     setIsSearching(false);
     setQuery("");
+    setResults([]);
+  };
+
+  const handleSearch = async (isNewSearch = true) => {
+    const searchQuery = query.trim();
+    if (searchQuery.length === 0) return;
+
+    Keyboard.dismiss();
+
+    setIsSearching(true);
+
+    if (isNewSearch) {
+      setResults([]);
+      setPage(1);
+      setIsLoading(true);
+    } else {
+      setLoadingMore(true);
+    }
+
+    try {
+      const data = await search(searchQuery, isNewSearch ? 1 : page + 1);
+      const newPhotos = data.results || [];
+
+      setResults((prev) => (isNewSearch ? newPhotos : [...prev, ...newPhotos]));
+      if (!isNewSearch) setPage((prev) => prev + 1);
+    } catch (err) {
+      console.log("Search Error:", err);
+    } finally {
+      setIsLoading(false);
+      setLoadingMore(false);
+    }
   };
 
   return (
     <View className="flex-1 bg-white dark:bg-slate-950">
       {/* --- HEADER SECTION --- */}
       {!isSearching ? (
-        /* LANDING HEADER WITH BLOBS */
         <View className="absolute inset-0" pointerEvents="none">
           {BLOB_DATA.map((blob, i) => (
             <View
@@ -101,7 +94,6 @@ export default function Home() {
           ))}
         </View>
       ) : (
-        /* RESULTS HEADER WITH GRADIENT */
         <View className="h-40 w-full relative">
           <LinearGradient
             colors={["#fbc2eb", "#a6c1ee"]}
@@ -132,7 +124,6 @@ export default function Home() {
             </View>
           )}
 
-          {/* SEARCH BAR (Shared Component) */}
           <View
             className={`flex-row items-center bg-white dark:bg-slate-900 rounded-[28px] px-4 py-1.5 border-2 border-slate-100 dark:border-slate-800 shadow-2xl shadow-slate-300 dark:shadow-none`}
           >
@@ -188,11 +179,15 @@ export default function Home() {
       {/* --- CONTENT SECTION --- */}
       {isSearching && (
         <View className="flex-1">
-          {results.length > 0 ? (
+          {isLoading ? (
+            <View className="flex-1 justify-center items-center">
+              <ActivityIndicator size="large" color="#a6c1ee" />
+            </View>
+          ) : results.length > 0 ? (
             <FlatList
               data={results}
               numColumns={2}
-              keyExtractor={(item) => item.id}
+              keyExtractor={(item, index) => `${item.id}-${index}`}
               contentContainerStyle={{
                 paddingHorizontal: 24,
                 paddingTop: 10,
@@ -206,12 +201,21 @@ export default function Home() {
                   onPress={() => handlePress(item)}
                 >
                   <Image
-                    source={{ uri: item.url }}
+                    source={{ uri: item.urls.regular }}
                     style={{ width: COLUMN_WIDTH, height: 260 }}
                     className="rounded-[32px] bg-slate-100 dark:bg-slate-800"
                   />
                 </TouchableOpacity>
               )}
+              onEndReachedThreshold={0.5}
+              onEndReached={() => {
+                if (!loadingMore) handleSearch(false);
+              }}
+              ListFooterComponent={() =>
+                loadingMore ? (
+                  <ActivityIndicator size="small" color="#000" />
+                ) : null
+              }
             />
           ) : (
             /* EMPTY / NOT FOUND STATE */
