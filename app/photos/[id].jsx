@@ -8,6 +8,11 @@ import {
   Pressable,
   ActivityIndicator,
   Alert,
+  Modal,
+  KeyboardAvoidingView,
+  Platform,
+  TouchableOpacity,
+  TextInput,
 } from "react-native";
 import * as FileSystem from "expo-file-system/legacy";
 import * as MediaLibrary from "expo-media-library";
@@ -19,6 +24,11 @@ import { useColorScheme } from "nativewind";
 import {
   getPhotoDetails,
   trackPhotoDownload,
+  getCollectionsForPhoto,
+  getCollections,
+  addImageToCollection,
+  createCollection,
+  removeImageFromCollection,
 } from "../../api/unsplash_collection";
 
 export default function PhotoDetail() {
@@ -29,34 +39,64 @@ export default function PhotoDetail() {
   const iconColor = isDark ? "#f1f5f9" : "#0f172a";
 
   const [isLiked, setIsLiked] = useState(false);
-  const [selectedCollections, setSelectedCollections] = useState(["Nature"]);
+  const [allCollections, setAllCollections] = useState([]);
+  const [selectedIds, setSelectedIds] = useState(new Set());
   const [photo, setPhoto] = useState(null);
   const [loading, setLoading] = useState(true);
   const [isDownloading, setIsDownloading] = useState(false);
-  const collections = ["Nature", "Finland", "Winter", "Forest"];
+  const [isRenameModalVisible, setIsRenameModalVisible] = useState(false);
+  const [newCollectionName, setNewCollectionName] = useState("");
 
   useEffect(() => {
-    const fetchDetails = async () => {
+    const initData = async () => {
       if (!id) return;
+
+      setLoading(true); 
       try {
-        const data = await getPhotoDetails(id);
-        setPhoto(data);
+        // Fetch everything in parallel
+        const [photoData, myFolders, activeFolders] = await Promise.all([
+          getPhotoDetails(id),
+          getCollections(), 
+          getCollectionsForPhoto(id), 
+        ]);
+
+        setPhoto(photoData);
+        setAllCollections(myFolders); 
+
+        setSelectedIds(new Set(activeFolders.map((c) => c.id)));
       } catch (err) {
-        console.err("Fetch Error:", err);
+        console.error("Initialization Error:", err);
+        Alert.alert("Error", "Could not load collection data.");
       } finally {
         setLoading(false);
       }
     };
-    fetchDetails();
+
+    initData();
   }, [id]);
 
-  const toggleCollection = (name) => {
-    setSelectedCollections((prev) => {
-      const newSelection = prev.includes(name)
-        ? prev.filter((item) => item !== name)
-        : [...prev, name];
-      return newSelection;
-    });
+  const toggleCollection = async (collectionId) => {
+    const isCurrentlyIn = selectedIds.has(collectionId);
+
+    try {
+      if (isCurrentlyIn) {
+        await removeImageFromCollection(collectionId, id);
+        setSelectedIds((prev) => {
+          const next = new Set(prev);
+          next.delete(collectionId);
+          return next;
+        });
+      } else {
+        await addImageToCollection(collectionId, {
+          unsplash_id: photo.id,
+          image_url: photo.urls.regular,
+          download_location: photo.links.download_location,
+        });
+        setSelectedIds((prev) => new Set(prev).add(collectionId));
+      }
+    } catch (err) {
+      console.error("Toggle error", err);
+    }
   };
 
   const handleShare = async () => {
@@ -117,6 +157,29 @@ export default function PhotoDetail() {
       );
     } finally {
       setIsDownloading(false);
+    }
+  };
+  const handleAddNewCollection = async () => {
+    if (!newCollectionName.trim()) return;
+
+    try {
+      const collectionCreated = await createCollection(newCollectionName);
+
+      setAllCollections((prev) => [...prev, collectionCreated]);
+
+      await addImageToCollection(collectionCreated.id, {
+        unsplash_id: photo.id,
+        image_url: photo.urls.regular,
+        download_location: photo.links.download_location,
+      });
+
+      setSelectedIds((prev) => new Set(prev).add(collectionCreated.id));
+
+      setNewCollectionName("");
+      setIsRenameModalVisible(false);
+    } catch (error) {
+      console.error(error);
+      Alert.alert("Error", "Failed to create collection. Please try again.");
     }
   };
 
@@ -216,49 +279,117 @@ export default function PhotoDetail() {
             <Text className="text-slate-900 dark:text-slate-100 font-black text-xl tracking-tight">
               Add to Collection
             </Text>
-            <Pressable>
-              <Text className="text-blue-500 font-bold text-sm">New +</Text>
+            <Pressable onPress={() => setIsRenameModalVisible(true)}>
+              <Text className="text-blue-500 font-bold text-md">New +</Text>
             </Pressable>
           </View>
-
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
             className="-mx-8 px-8"
           >
             <View className="flex-row pr-16" style={{ gap: 8 }}>
-              {collections.map((name) => {
-                const isActive = selectedCollections.includes(name);
-                return (
-                  <Pressable
-                    key={name}
-                    onPress={() => toggleCollection(name)}
-                    className={`flex-row items-center px-6 py-4 rounded-[24px] border ${
-                      isActive
-                        ? "bg-blue-600 border-blue-600"
-                        : "bg-slate-50 border-slate-100 dark:bg-slate-900 dark:border-slate-800"
-                    }`}
-                  >
-                    <Text
-                      className={`font-bold ${isActive ? "text-white" : "text-slate-500 dark:text-slate-400"}`}
+              {allCollections?.length > 0 ? (
+                allCollections.map((col) => {
+                  // Check if this collection ID exists in our selectedIds Set
+                  const isActive = selectedIds.has(col.id);
+
+                  return (
+                    <Pressable
+                      key={col.id}
+                      onPress={() => toggleCollection(col.id)} // Pass the ID, not the name
+                      className={`flex-row items-center px-6 py-4 rounded-[24px] border ${
+                        isActive
+                          ? "bg-blue-600 border-blue-600"
+                          : "bg-slate-50 border-slate-100 dark:bg-slate-900 dark:border-slate-800"
+                      }`}
                     >
-                      {name}
-                    </Text>
-                    {isActive && (
-                      <Ionicons
-                        name="checkmark-circle"
-                        size={18}
-                        color="white"
-                        style={{ marginLeft: 8 }}
-                      />
-                    )}
-                  </Pressable>
-                );
-              })}
+                      <Text
+                        className={`font-bold ${
+                          isActive
+                            ? "text-white"
+                            : "text-slate-500 dark:text-slate-400"
+                        }`}
+                      >
+                        {col.name}
+                      </Text>
+                      {isActive && (
+                        <Ionicons
+                          name="checkmark-circle"
+                          size={18}
+                          color="white"
+                          style={{ marginLeft: 8 }}
+                        />
+                      )}
+                    </Pressable>
+                  );
+                })
+              ) : (
+                <Pressable
+                  onPress={() => setIsRenameModalVisible(true)}
+                  className="flex-row items-center px-6 py-4 rounded-[24px] border border-dashed border-slate-300 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-900/50"
+                >
+                  <Ionicons
+                    name="folder-open-outline"
+                    size={18}
+                    color="#94a3b8"
+                  />
+                  <Text className="text-slate-400 font-medium ml-2 italic">
+                    No collections yet. Tap "New +" to start.
+                  </Text>
+                </Pressable>
+              )}
             </View>
           </ScrollView>
         </View>
       </ScrollView>
+      <Modal visible={isRenameModalVisible} transparent animationType="fade">
+        <View className="flex-1 bg-black/60 justify-center px-6">
+          <KeyboardAvoidingView
+            behavior={Platform.OS === "ios" ? "padding" : "height"}
+            className="w-full"
+          >
+            <View className="w-full bg-white dark:bg-slate-900 rounded-[32px] p-8 shadow-2xl">
+              <Text className="text-2xl font-bold text-slate-900 dark:text-white mb-6">
+                Add New Collection
+              </Text>
+
+              <View className="relative w-full mb-6">
+                <View className="flex-row items-center bg-white dark:bg-slate-900 rounded-3xl px-5 py-1.5 border border-slate-200 dark:border-slate-800 shadow-lg shadow-slate-200/50 dark:shadow-none">
+                  <TextInput
+                    placeholder="Collection Name"
+                    placeholderTextColor="#94a3b8"
+                    className="flex-1 px-2 text-slate-800 dark:text-slate-100"
+                    value={newCollectionName}
+                    onChangeText={setNewCollectionName}
+                    style={{
+                      height: 52,
+                      fontSize: 17,
+                      fontWeight: "500",
+                    }}
+                  />
+                </View>
+              </View>
+
+              <View className="flex-row justify-end items-center">
+                <TouchableOpacity
+                  onPress={() => setIsRenameModalVisible(false)}
+                  className="px-6 py-3 mr-2"
+                >
+                  <Text className="text-slate-500 font-bold">Cancel</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  onPress={handleAddNewCollection}
+                  className="bg-blue-600 px-8 py-3 rounded-2xl"
+                >
+                  <Text className="text-white font-bold text-lg">Save</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </KeyboardAvoidingView>
+        </View>
+      </Modal>
     </View>
   );
 }
