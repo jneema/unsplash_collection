@@ -31,7 +31,6 @@ export default function Collections() {
     try {
       const data = await getCollections();
       setCollections(data);
-      console.log(data);
     } catch (err) {
       console.error("Error");
     }
@@ -54,7 +53,6 @@ export default function Collections() {
       setNewTitle("");
 
       const url = `/search?collectionId=${savedCollection.id}&collectionName=${encodeURIComponent(savedCollection.name)}&query=${encodeURIComponent(savedCollection.name)}`;
-      console.log("Navigating to:", url);
       router.push(url);
     } catch (error) {
       console.error(error);
@@ -63,7 +61,6 @@ export default function Collections() {
 
   const handleAddPhotosToCollection = (collection) => {
     const url = `/search?collectionId=${collection.id}&collectionName=${encodeURIComponent(collection.name)}&query=${encodeURIComponent(collection.name)}`;
-    console.log("Navigating to:", url);
     router.push(url);
   };
 

@@ -5,88 +5,109 @@ import {
   FlatList,
   Dimensions,
   Pressable,
+  useColorScheme,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import {
+  SafeAreaView,
+  useSafeAreaInsets,
+} from "react-native-safe-area-context";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
-import { StatusBar } from "expo-status-bar";
+import { useEffect, useState } from "react";
+import { getCollectionImages } from "../../api/unsplash_collection";
+import { LinearGradient } from "expo-linear-gradient";
 
 const { width } = Dimensions.get("window");
 const COLUMN_WIDTH = (width - 60) / 2;
 
 export default function CollectionDetail() {
   const { id } = useLocalSearchParams();
+  const insets = useSafeAreaInsets();
   const router = useRouter();
+  const colorScheme = useColorScheme();
 
-  const collection = {
-    id,
-    title: "Minimalist Interiors",
-    count: "1.2k photos",
-    description: "A curated collection of minimalist interior designs",
-    photos: [
-      {
-        id: "1",
-        url: "https://images.unsplash.com/photo-1494438639946-1ebd1d20bf85?w=500",
-      },
-      {
-        id: "2",
-        url: "https://images.unsplash.com/photo-1505691938895-1758d7eaa511?w=500",
-      },
-      {
-        id: "3",
-        url: "https://images.unsplash.com/photo-1513694203232-719a280e022f?w=500",
-      },
-      {
-        id: "4",
-        url: "https://images.unsplash.com/photo-1540518614846-7eded433c457?w=500",
-      },
-      {
-        id: "5",
-        url: "https://images.unsplash.com/photo-1540518614846-7eded433c457?w=500",
-      },
-    ],
+  const isDark = colorScheme === "dark";
+  const [collection, setCollection] = useState(null);
+
+  const fetchImages = async (id) => {
+    try {
+      const res = await getCollectionImages(id);
+      setCollection(res);
+    } catch (error) {
+      console.error("Failed to get images", error);
+    }
   };
+
+  useEffect(() => {
+    fetchImages(id);
+  }, [id]);
 
   return (
     <View className="flex-1 bg-white dark:bg-slate-950">
-      <StatusBar style="auto" />
+      {/* 1. Background Gradient Layer */}
+      <View
+        style={{
+          height: insets.top + 56, // Increased height to accommodate title + count
+          position: "absolute",
+          top: 0,
+          left: 0,
+          right: 0,
+        }}
+      >
+        <LinearGradient
+          colors={isDark ? ["#4c0519", "#0f172a"] : ["#FFE4E6", "#e2e8f0"]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 0 }}
+          style={{ flex: 1 }}
+        />
+      </View>
 
+      {/* 2. Content Layer */}
       <SafeAreaView className="flex-1" edges={["top"]}>
-        {/* Header */}
-        <View className="px-6 py-4 flex-row items-center justify-between">
+        {/* Navigation & Title Row */}
+        <View className="flex-row items-center justify-between px-6 h-16">
           <Pressable
             onPress={() => router.back()}
-            className="bg-slate-50 dark:bg-slate-900 p-3 rounded-full"
+            className="bg-white/30 dark:bg-white/10 p-2.5 rounded-full"
           >
-            <Ionicons name="chevron-back" size={24} color="#64748b" />
+            <Ionicons
+              name="chevron-back"
+              size={24}
+              color={isDark ? "#f1f5f9" : "#1e293b"}
+            />
           </Pressable>
-          <Pressable className="bg-slate-50 dark:bg-slate-900 p-3 rounded-full">
-            <Ionicons name="ellipsis-horizontal" size={24} color="#64748b" />
-          </Pressable>
-        </View>
 
-        {/* Collection Info */}
-        <View className="px-6 mb-6">
-          <Text className="text-4xl font-black text-slate-900 dark:text-slate-50 mb-2 tracking-tight">
-            {collection.title}
-          </Text>
-          <Text className="text-slate-500 dark:text-slate-400 font-medium">
-            {collection.count}
-          </Text>
-          {collection.description && (
-            <Text className="text-slate-600 dark:text-slate-400 mt-2 leading-6">
-              {collection.description}
+          <View className="flex-1 items-center px-4">
+            <Text
+              numberOfLines={1}
+              className="text-3xl font-bold text-slate-900 dark:text-slate-50 tracking-tight text-center"
+            >
+              {collection?.name || "Collection"}
             </Text>
-          )}
+            {/* Subtitle count inside the gradient area */}
+            <Text className="text-slate-500 dark:text-slate-400 font-bold text-[10px] uppercase tracking-widest">
+              {collection?.images?.length || 0}{" "}
+              {collection?.images?.length === 1 ? "Photo" : "Photos"}
+            </Text>
+          </View>
+
+          <Pressable className="bg-white/30 dark:bg-white/10 p-2.5 rounded-full">
+            <Ionicons
+              name="ellipsis-horizontal"
+              size={24}
+              color={isDark ? "#f1f5f9" : "#1e293b"}
+            />
+          </Pressable>
         </View>
 
-        {/* Photos Grid */}
+        {/* Photos Grid - Added marginTop to push it below the gradient header */}
         <FlatList
-          data={collection.photos}
+          data={collection?.images}
           numColumns={2}
-          keyExtractor={(item) => item.id}
+          keyExtractor={(item) => item.id.toString()}
           contentContainerStyle={{
             paddingHorizontal: 24,
+            paddingTop: 10,
             paddingBottom: 40,
           }}
           columnWrapperStyle={{
@@ -97,14 +118,14 @@ export default function CollectionDetail() {
             <Pressable
               onPress={() =>
                 router.push(
-                  `/photos/${item.id}?url=${encodeURIComponent(item.url)}`,
+                  `/photos/${item.unsplash_id}?url=${encodeURIComponent(item.image_url)}`,
                 )
               }
             >
               <Image
-                source={{ uri: item.url }}
+                source={{ uri: item.image_url }}
                 style={{ width: COLUMN_WIDTH, height: 260 }}
-                className="rounded-[24px] bg-slate-100 dark:bg-slate-800"
+                className="rounded-[32px] bg-slate-100 dark:bg-slate-800"
                 resizeMode="cover"
               />
             </Pressable>

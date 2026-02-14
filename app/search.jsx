@@ -10,6 +10,7 @@ import {
   ActivityIndicator,
   Pressable,
   Keyboard,
+  useColorScheme, 
 } from "react-native";
 import {
   SafeAreaView,
@@ -32,7 +33,10 @@ export default function SearchScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const params = useLocalSearchParams();
+  const colorScheme = useColorScheme();
   const initialSearchDone = useRef(false);
+
+  const isDark = colorScheme === "dark";
 
   const targetCollectionId = params.collectionId || null;
   const collectionName = params.collectionName || "";
@@ -118,13 +122,6 @@ export default function SearchScreen() {
         });
         setAddedPhotos((prev) => new Set(prev).add(photo.id));
       } catch (err) {
-        if (err.response?.status === 503) {
-          alert("Unsplash servers are busy. Please try again in a moment.");
-        } else if (err.response?.status === 403) {
-          alert("Rate limit exceeded. Try again in an hour.");
-        } else {
-          alert("Could not add to collection.");
-        }
         console.error(err);
       }
     } else {
@@ -137,7 +134,7 @@ export default function SearchScreen() {
   };
 
   return (
-    <View style={{ flex: 1 }}>
+    <View className="flex-1 bg-white dark:bg-slate-950">
       <View
         style={{
           height: insets.top + (targetCollectionId ? 100 : 70),
@@ -145,7 +142,7 @@ export default function SearchScreen() {
         }}
       >
         <LinearGradient
-          colors={["#fbc2eb", "#a6c1ee"]}
+          colors={isDark ? ["#4c0519", "#0f172a"] : ["#FFE4E6", "#e2e8f0"]}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 0 }}
           style={{ flex: 1 }}
@@ -161,11 +158,11 @@ export default function SearchScreen() {
             <View className="flex-row items-center justify-between h-12 mb-5">
               <Pressable
                 onPress={handleBack}
-                className="bg-white/40 active:bg-white/60 p-2 rounded-full"
+                className="bg-white/40 dark:bg-slate-800/40 active:bg-white/60 p-2 rounded-full"
               >
-                <Ionicons name="chevron-back" size={24} color="#1e293b" />
+                <Ionicons name="chevron-back" size={24} color={isDark ? "#f1f5f9" : "#1e293b"} />
               </Pressable>
-              <Text className="text-4xl font-bold text-slate-900 tracking-tight">
+              <Text className="text-4xl font-bold text-slate-900 dark:text-slate-50 tracking-tight">
                 Add to {collectionName || "Collection"}
               </Text>
               <View className="w-10" />
@@ -184,13 +181,13 @@ export default function SearchScreen() {
           >
             {!targetCollectionId && (
               <TouchableOpacity onPress={handleBack} className="mr-2">
-                <Ionicons name="arrow-back" size={24} color="#94a3b8" />
+                <Ionicons name="arrow-back" size={24} color={isDark ? "#64748b" : "#94a3b8"} />
               </TouchableOpacity>
             )}
             {committedQuery ? (
               <View className="flex-1 flex-row items-center">
-                <View className="flex-row items-center bg-blue-100 px-3 py-1.5 rounded-full">
-                  <Text className="text-blue-700 font-semibold mr-2">
+                <View className="flex-row items-center bg-blue-100 dark:bg-blue-900/40 px-3 py-1.5 rounded-full">
+                  <Text className="text-blue-700 dark:text-blue-300 font-semibold mr-2">
                     {committedQuery}
                   </Text>
 
@@ -200,9 +197,8 @@ export default function SearchScreen() {
                       setQuery("");
                       setResults([]);
                     }}
-                    hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
                   >
-                    <Ionicons name="close" size={16} color="#1d4ed8" />
+                    <Ionicons name="close" size={16} color={isDark ? "#93c5fd" : "#1d4ed8"} />
                   </TouchableOpacity>
                 </View>
               </View>
@@ -220,7 +216,7 @@ export default function SearchScreen() {
             )}
 
             <TouchableOpacity onPress={() => handleSearch(query)}>
-              <Ionicons name="search" size={24} color="#cbd5e1" />
+              <Ionicons name="search" size={24} color={isDark ? "#475569" : "#cbd5e1"} />
             </TouchableOpacity>
           </View>
         </View>
@@ -229,7 +225,7 @@ export default function SearchScreen() {
       <View className="flex-1">
         {isLoading || isSyncingCollection ? (
           <View className="flex-1 justify-center items-center">
-            <ActivityIndicator size="large" color="#a6c1ee" />
+            <ActivityIndicator size="large" color={isDark ? "#475569" : "#a6c1ee"} />
           </View>
         ) : results.length > 0 ? (
           <FlatList
@@ -288,7 +284,7 @@ export default function SearchScreen() {
               loadingMore ? (
                 <ActivityIndicator
                   size="small"
-                  color="#a6c1ee"
+                  color={isDark ? "#475569" : "#a6c1ee"}
                   className="my-4"
                 />
               ) : null
@@ -298,7 +294,7 @@ export default function SearchScreen() {
           <NotFound
             name="cloud-offline-outline"
             size={60}
-            color="#cbd5e1"
+            color={isDark ? "#334155" : "#cbd5e1"}
             query={query}
             onPress={handleBack}
           />

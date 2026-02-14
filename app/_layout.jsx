@@ -13,7 +13,7 @@ const RootLayout = () => {
         <Stack.Screen name="(tabs)" />
         <Stack.Screen name="photos/[id]" />
         <Stack.Screen name="collections/[id]" />
-        <Stack.Screen name="photos/search"/>
+        <Stack.Screen name="search"/>
       </Stack>
     </AppThemeProvider>
   );
