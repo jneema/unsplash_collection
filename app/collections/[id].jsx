@@ -256,6 +256,7 @@ export default function CollectionDetail() {
                             params: {
                               collectionId: id,
                               collectionName: collection?.name,
+                              query: collection?.name
                             },
                           });
                         }}
