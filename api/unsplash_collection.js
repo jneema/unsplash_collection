@@ -35,12 +35,12 @@ export const trackPhotoDownload = async (photo) => {
 };
 
 export const getCollections = async () => {
-  const response = await api.get('/api/collections');
+  const response = await api.get("/api/collections");
   return response.data;
 };
 
 export const createCollection = async (name) => {
-  const response = await api.post('/api/collections', { name });
+  const response = await api.post("/api/collections", { name });
   return response.data;
 };
 
@@ -54,11 +54,27 @@ export const addImageToCollection = async (collectionId, photoData) => {
     const response = await api.post(`/api/collections/${collectionId}/images`, {
       unsplash_id: photoData.unsplash_id,
       image_url: photoData.image_url,
-      download_location: photoData.download_location
+      download_location: photoData.download_location,
     });
     return response.data;
   } catch (error) {
-    console.error("API Error adding image:", error.response?.data || error.message);
+    console.error(
+      "API Error adding image:",
+      error.response?.data || error.message,
+    );
+    throw error;
+  }
+};
+
+export const removeImageFromCollection = async (collectionId, unsplashId) => {
+  try {
+    const response = await api.delete(
+      `/api/collections/${collectionId}/images/${unsplashId}`,
+    );
+
+    return response.data;
+  } catch (error) {
+    console.error("API Error (removeImage):", error);
     throw error;
   }
 };

@@ -1,3 +1,4 @@
+import React, { memo, useEffect, useState } from "react";
 import {
   View,
   Text,
@@ -6,6 +7,7 @@ import {
   Dimensions,
   Pressable,
   useColorScheme,
+  TouchableOpacity,
 } from "react-native";
 import {
   SafeAreaView,
@@ -13,9 +15,12 @@ import {
 } from "react-native-safe-area-context";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
-import { useEffect, useState } from "react";
-import { getCollectionImages } from "../../api/unsplash_collection";
+import {
+  getCollectionImages,
+  removeImageFromCollection,
+} from "../../api/unsplash_collection";
 import { LinearGradient } from "expo-linear-gradient";
+import PhotoItem from "../../components/photo_item";
 
 const { width } = Dimensions.get("window");
 const COLUMN_WIDTH = (width - 60) / 2;
@@ -28,6 +33,68 @@ export default function CollectionDetail() {
 
   const isDark = colorScheme === "dark";
   const [collection, setCollection] = useState(null);
+  const [selectedIds, setSelectedIds] = useState(new Set());
+  const [isSelectionMode, setIsSelectionMode] = useState(false);
+  const [showMenu, setShowMenu] = useState(false);
+
+  const renderItem = ({ item }) => (
+    <PhotoItem
+      item={item}
+      width={COLUMN_WIDTH}
+      isSelectionMode={isSelectionMode}
+      isSelected={selectedIds.has(item.unsplash_id)}
+      onLongPress={() => {
+        setIsSelectionMode(true);
+        toggleSelection(item.unsplash_id);
+      }}
+      onPress={() => {
+        if (isSelectionMode) {
+          toggleSelection(item.unsplash_id);
+        } else {
+          router.push(
+            `/photos/${item.unsplash_id}?url=${encodeURIComponent(item.image_url)}`,
+          );
+        }
+      }}
+    />
+  );
+
+  const toggleSelection = (unsplashId) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(unsplashId)) {
+        next.delete(unsplashId);
+      } else {
+        next.add(unsplashId);
+      }
+      if (next.size === 0) setIsSelectionMode(false);
+      return next;
+    });
+  };
+
+  const handleBulkDelete = async () => {
+    if (selectedIds.size === 0) return;
+
+    try {
+      // Convert Set to Array and map to API calls
+      const deletePromises = Array.from(selectedIds).map((uid) =>
+        removeImageFromCollection(id, uid),
+      );
+
+      await Promise.all(deletePromises);
+
+      // Update the local state to remove the photos immediately
+      setCollection((prev) => ({
+        ...prev,
+        images: prev.images.filter((img) => !selectedIds.has(img.unsplash_id)),
+      }));
+      setSelectedIds(new Set());
+      setIsSelectionMode(false);
+    } catch (error) {
+      console.error("Bulk delete failed", error);
+      alert("Could not remove some images. Please try again.");
+    }
+  };
 
   const fetchImages = async (id) => {
     try {
@@ -44,10 +111,9 @@ export default function CollectionDetail() {
 
   return (
     <View className="flex-1 bg-white dark:bg-slate-950">
-      {/* 1. Background Gradient Layer */}
       <View
         style={{
-          height: insets.top + 56, // Increased height to accommodate title + count
+          height: insets.top + 56,
           position: "absolute",
           top: 0,
           left: 0,
@@ -64,7 +130,6 @@ export default function CollectionDetail() {
 
       {/* 2. Content Layer */}
       <SafeAreaView className="flex-1" edges={["top"]}>
-        {/* Navigation & Title Row */}
         <View className="flex-row items-center justify-between px-6 h-16">
           <Pressable
             onPress={() => router.back()}
@@ -84,26 +149,113 @@ export default function CollectionDetail() {
             >
               {collection?.name || "Collection"}
             </Text>
-            {/* Subtitle count inside the gradient area */}
             <Text className="text-slate-500 dark:text-slate-400 font-bold text-[10px] uppercase tracking-widest">
               {collection?.images?.length || 0}{" "}
               {collection?.images?.length === 1 ? "Photo" : "Photos"}
             </Text>
           </View>
 
-          <Pressable className="bg-white/30 dark:bg-white/10 p-2.5 rounded-full">
-            <Ionicons
-              name="ellipsis-horizontal"
-              size={24}
-              color={isDark ? "#f1f5f9" : "#1e293b"}
-            />
-          </Pressable>
+          <View className="relative z-50">
+            {isSelectionMode ? (
+              <TouchableOpacity
+                onPress={() => {
+                  setIsSelectionMode(false);
+                  setSelectedIds(new Set());
+                }}
+                className="bg-blue-500/10 px-4 py-2 rounded-full"
+              >
+                <Text className="text-blue-500 font-bold">Done</Text>
+              </TouchableOpacity>
+            ) : (
+              <>
+                <Pressable
+                  onPress={() => setShowMenu(!showMenu)}
+                  className="bg-white/30 dark:bg-white/10 p-2.5 rounded-full"
+                >
+                  <Ionicons
+                    name="ellipsis-horizontal"
+                    size={24}
+                    color={isDark ? "#f1f5f9" : "#1e293b"}
+                  />
+                </Pressable>
+
+                {showMenu && (
+                  <>
+                    {/* Backdrop: covers the screen to catch taps outside the menu */}
+                    <Pressable
+                      style={{
+                        position: "absolute",
+                        top: -100,
+                        right: -100,
+                        width: width,
+                        height: 1000,
+                      }}
+                      onPress={() => setShowMenu(false)}
+                    />
+
+                    <View
+                      style={{ elevation: 5, shadowOpacity: 0.2 }}
+                      className="absolute right-0 top-14 w-48 bg-white dark:bg-slate-900 rounded-3xl border border-slate-100 dark:border-slate-800 p-2 z-[100]"
+                    >
+                      <TouchableOpacity
+                        onPress={() => {
+                          setIsSelectionMode(true);
+                          setShowMenu(false);
+                        }}
+                        className="flex-row items-center p-4 active:bg-slate-50 dark:active:bg-slate-800 rounded-2xl"
+                      >
+                        <Ionicons
+                          name="checkmark-circle-outline"
+                          size={20}
+                          color={isDark ? "#f1f5f9" : "#1e293b"}
+                        />
+                        <Text className="ml-3 font-semibold text-slate-900 dark:text-slate-50">
+                          Select Photos
+                        </Text>
+                      </TouchableOpacity>
+
+                      <TouchableOpacity
+                        onPress={() => {
+                          setShowMenu(false);
+                          router.push({
+                            pathname: "/search",
+                            params: {
+                              collectionId: id,
+                              collectionName: collection?.name,
+                            },
+                          });
+                        }}
+                        className="flex-row items-center p-4 active:bg-slate-50 dark:active:bg-slate-800 rounded-2xl"
+                      >
+                        <Ionicons
+                          name="add-circle-outline"
+                          size={20}
+                          color={isDark ? "#f1f5f9" : "#1e293b"}
+                        />
+                        <Text className="ml-3 font-semibold text-slate-900 dark:text-slate-50">
+                          Add Photos
+                        </Text>
+                      </TouchableOpacity>
+                    </View>
+                  </>
+                )}
+              </>
+            )}
+          </View>
         </View>
 
-        {/* Photos Grid - Added marginTop to push it below the gradient header */}
         <FlatList
           data={collection?.images}
           numColumns={2}
+          initialNumToRender={10}
+          maxToRenderPerBatch={10}
+          windowSize={5}
+          removeClippedSubviews={true}
+          getItemLayout={(data, index) => ({
+            length: 276,
+            offset: 276 * Math.floor(index / 2),
+            index,
+          })}
           keyExtractor={(item) => item.id.toString()}
           contentContainerStyle={{
             paddingHorizontal: 24,
@@ -114,23 +266,37 @@ export default function CollectionDetail() {
             justifyContent: "space-between",
             marginBottom: 16,
           }}
-          renderItem={({ item }) => (
-            <Pressable
-              onPress={() =>
-                router.push(
-                  `/photos/${item.unsplash_id}?url=${encodeURIComponent(item.image_url)}`,
-                )
-              }
-            >
-              <Image
-                source={{ uri: item.image_url }}
-                style={{ width: COLUMN_WIDTH, height: 260 }}
-                className="rounded-[32px] bg-slate-100 dark:bg-slate-800"
-                resizeMode="cover"
-              />
-            </Pressable>
-          )}
+          renderItem={renderItem}
         />
+        {isSelectionMode && (
+          <View
+            style={{ bottom: insets.bottom + 20 }}
+            className="absolute left-6 right-6 bg-slate-900 dark:bg-slate-800 h-16 rounded-3xl flex-row items-center justify-between px-6 shadow-2xl"
+          >
+            <Text className="text-white font-bold">
+              {selectedIds.size} selected
+            </Text>
+
+            <View className="flex-row items-center">
+              <TouchableOpacity
+                onPress={() => {
+                  setIsSelectionMode(false);
+                  setSelectedIds(new Set());
+                }}
+                className="mr-6"
+              >
+                <Text className="text-slate-400 font-bold">Cancel</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                onPress={handleBulkDelete}
+                className="bg-red-500 px-5 py-2 rounded-2xl"
+              >
+                <Text className="text-white font-bold">Remove</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        )}
       </SafeAreaView>
     </View>
   );
