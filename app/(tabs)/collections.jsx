@@ -18,6 +18,7 @@ import {
   createCollection,
   getCollections,
 } from "../../api/unsplash_collection";
+import { ActivityIndicator } from "react-native";
 
 export default function Collections() {
   const router = useRouter();
@@ -26,13 +27,18 @@ export default function Collections() {
   const [newTitle, setNewTitle] = useState("");
   const [isFocused, setIsFocused] = useState(false);
   const [hasError, setHasError] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   const fetchCollections = async () => {
+    setLoading(true);
+
     try {
       const data = await getCollections();
       setCollections(data);
     } catch (err) {
       console.error("Error");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -66,7 +72,11 @@ export default function Collections() {
     router.push(url);
   };
 
-  return (
+  return loading ? (
+    <View className="flex-1 items-center justify-center bg-white dark:bg-slate-950">
+      <ActivityIndicator size="large" color="#2563eb" />
+    </View>
+  ) : (
     <SafeAreaView className="flex-1 bg-white dark:bg-slate-950">
       <StatusBar style="auto" />
       <FlatList
