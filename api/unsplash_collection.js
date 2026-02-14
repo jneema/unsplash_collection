@@ -78,3 +78,25 @@ export const removeImageFromCollection = async (collectionId, unsplashId) => {
     throw error;
   }
 };
+
+export const updateCollection = async (id, name) => {
+  try {
+    const res = await api.put(
+      `/api/collections/${id}?name=${encodeURIComponent(name)}`,
+    );
+    return res.data;
+  } catch (error) {
+    console.error("API Error updating collection:", error);
+    throw error;
+  }
+};
+
+export const deleteFullCollection = async (id) => {
+  try {
+    const res = await api.delete(`/api/collections/${id}`);
+    return res.data;
+  } catch (error) {
+    console.error("API Error deleting collection:", error);
+    throw error;
+  }
+};

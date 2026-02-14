@@ -1,13 +1,17 @@
-import React, { memo, useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   View,
   Text,
-  Image,
   FlatList,
   Dimensions,
   Pressable,
   useColorScheme,
   TouchableOpacity,
+  Modal,
+  TextInput,
+  Alert,
+  KeyboardAvoidingView,
+  Platform,
 } from "react-native";
 import {
   SafeAreaView,
@@ -18,6 +22,8 @@ import { Ionicons } from "@expo/vector-icons";
 import {
   getCollectionImages,
   removeImageFromCollection,
+  updateCollection,
+  deleteFullCollection,
 } from "../../api/unsplash_collection";
 import { LinearGradient } from "expo-linear-gradient";
 import PhotoItem from "../../components/photo_item";
@@ -36,6 +42,8 @@ export default function CollectionDetail() {
   const [selectedIds, setSelectedIds] = useState(new Set());
   const [isSelectionMode, setIsSelectionMode] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
+  const [isRenameModalVisible, setIsRenameModalVisible] = useState(false);
+  const [newName, setNewName] = useState("");
 
   const renderItem = ({ item }) => (
     <PhotoItem
@@ -76,14 +84,12 @@ export default function CollectionDetail() {
     if (selectedIds.size === 0) return;
 
     try {
-      // Convert Set to Array and map to API calls
       const deletePromises = Array.from(selectedIds).map((uid) =>
         removeImageFromCollection(id, uid),
       );
 
       await Promise.all(deletePromises);
 
-      // Update the local state to remove the photos immediately
       setCollection((prev) => ({
         ...prev,
         images: prev.images.filter((img) => !selectedIds.has(img.unsplash_id)),
@@ -108,6 +114,34 @@ export default function CollectionDetail() {
   useEffect(() => {
     fetchImages(id);
   }, [id]);
+
+  const handleRename = async () => {
+    try {
+      await updateCollection(id, newName);
+      setCollection((prev) => ({ ...prev, name: newName }));
+      setIsRenameModalVisible(false);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const handleDeleteCollection = () => {
+    Alert.alert(
+      "Delete Collection",
+      "Are you sure? This will remove all saved images in this collection.",
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Delete",
+          style: "destructive",
+          onPress: async () => {
+            await deleteFullCollection(id);
+            router.replace("/collections");
+          },
+        },
+      ],
+    );
+  };
 
   return (
     <View className="flex-1 bg-white dark:bg-slate-950">
@@ -236,6 +270,43 @@ export default function CollectionDetail() {
                           Add Photos
                         </Text>
                       </TouchableOpacity>
+                      {/* Inside the Dropdown View */}
+                      <TouchableOpacity
+                        onPress={() => {
+                          setShowMenu(false);
+                          setNewName(collection?.name);
+                          setIsRenameModalVisible(true);
+                        }}
+                        className="flex-row items-center p-4 active:bg-slate-50 dark:active:bg-slate-800 rounded-2xl"
+                      >
+                        <Ionicons
+                          name="pencil-outline"
+                          size={20}
+                          color={isDark ? "#f1f5f9" : "#1e293b"}
+                        />
+                        <Text className="ml-3 font-semibold text-slate-900 dark:text-slate-50">
+                          Edit Name
+                        </Text>
+                      </TouchableOpacity>
+
+                      <View className="h-[1px] bg-slate-100 dark:bg-slate-800 my-1 mx-2" />
+
+                      <TouchableOpacity
+                        onPress={() => {
+                          setShowMenu(false);
+                          handleDeleteCollection();
+                        }}
+                        className="flex-row items-center p-4 active:bg-red-50 dark:active:bg-red-900/20 rounded-2xl"
+                      >
+                        <Ionicons
+                          name="trash-outline"
+                          size={20}
+                          color="#ef4444"
+                        />
+                        <Text className="ml-3 font-semibold text-red-500">
+                          Delete Collection
+                        </Text>
+                      </TouchableOpacity>
                     </View>
                   </>
                 )}
@@ -297,6 +368,53 @@ export default function CollectionDetail() {
             </View>
           </View>
         )}
+        <Modal visible={isRenameModalVisible} transparent animationType="fade">
+          <View className="flex-1 bg-black/60 justify-center px-6">
+            <KeyboardAvoidingView
+              behavior={Platform.OS === "ios" ? "padding" : "height"}
+              className="w-full"
+            >
+              <View className="w-full bg-white dark:bg-slate-900 rounded-[32px] p-8 shadow-2xl">
+                <Text className="text-2xl font-bold text-slate-900 dark:text-white mb-6">
+                  Rename Collection
+                </Text>
+
+                <View className="relative w-full mb-6">
+                  <View className="flex-row items-center bg-white dark:bg-slate-900 rounded-3xl px-5 py-1.5 border border-slate-200 dark:border-slate-800 shadow-lg shadow-slate-200/50 dark:shadow-none">
+                    <TextInput
+                      placeholder="Collection Name"
+                      placeholderTextColor="#94a3b8"
+                      className="flex-1 px-2 text-slate-800 dark:text-slate-100"
+                      value={newName}
+                      onChangeText={setNewName}
+                      style={{
+                        height: 52,
+                        fontSize: 17,
+                        fontWeight: "500",
+                      }}
+                    />
+                  </View>
+                </View>
+
+                <View className="flex-row justify-end items-center">
+                  <TouchableOpacity
+                    onPress={() => setIsRenameModalVisible(false)}
+                    className="px-6 py-3 mr-2"
+                  >
+                    <Text className="text-slate-500 font-bold">Cancel</Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    onPress={handleRename}
+                    className="bg-blue-600 px-8 py-3 rounded-2xl"
+                  >
+                    <Text className="text-white font-bold text-lg">Save</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            </KeyboardAvoidingView>
+          </View>
+        </Modal>
       </SafeAreaView>
     </View>
   );

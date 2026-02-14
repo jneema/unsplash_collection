@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import {
   Text,
   View,
@@ -12,7 +12,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { StatusBar } from "expo-status-bar";
-import { useRouter } from "expo-router";
+import { useFocusEffect, useRouter } from "expo-router";
 import CollectionCard from "../../components/collection_card";
 import {
   createCollection,
@@ -36,9 +36,11 @@ export default function Collections() {
     }
   };
 
-  useEffect(() => {
-    fetchCollections();
-  }, []);
+  useFocusEffect(
+    useCallback(() => {
+      fetchCollections();
+    }, []),
+  );
 
   const handleCreateCollection = async () => {
     if (newTitle.trim().length === 0) {

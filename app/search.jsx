@@ -59,7 +59,7 @@ export default function SearchScreen() {
         setIsSyncingCollection(true);
         try {
           const existingImages = await getCollectionImages(targetCollectionId);
-          currentIds = new Set(existingImages.map((img) => img.unsplash_id));
+          currentIds = new Set(existingImages?.images?.map((img) => img.unsplash_id));
           setAddedPhotos(currentIds);
         } catch (err) {
           console.error(err);
