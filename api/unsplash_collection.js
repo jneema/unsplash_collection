@@ -35,7 +35,7 @@ export const trackPhotoDownload = async (photo) => {
 };
 
 export const getCollectionsForPhoto = async (unsplashId) => {
-  const res = await api.get(`/api/photos/${unsplashId}/collections`);
+  const res = await api.get(`/api/collections/by-photo/${unsplashId}`);
   return res.data;
 };
 
