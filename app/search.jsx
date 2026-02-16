@@ -33,7 +33,6 @@ export default function SearchScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const params = useLocalSearchParams();
-  console.log(params)
   const colorScheme = useColorScheme();
   const initialSearchDone = useRef(false);
 

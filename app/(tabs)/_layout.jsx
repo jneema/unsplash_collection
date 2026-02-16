@@ -25,7 +25,7 @@ export default function TabLayout() {
       </NativeTabs.Trigger>
       <NativeTabs.Trigger name="likes">
         <Label>Likes</Label>
-        <Icon sf="heart.fill" drawable="ic_menu_favorite" />
+        <Icon sf="heart.fill" drawable="btn_star" />
         {likedPhotos.length > 0 && (
           <Badge>
             {likedPhotos.length > 99 ? "99+" : likedPhotos.length.toString()}
