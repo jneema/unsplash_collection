@@ -4,8 +4,12 @@ import {
   Label,
   Badge,
 } from "expo-router/unstable-native-tabs";
+import { useSelector } from "react-redux";
 
 export default function TabLayout() {
+  const collectionsCount = useSelector((state) => state.app.collectionsCount);
+  const likedPhotos = useSelector((state) => state.app.likedPhotos);
+
   return (
     <NativeTabs>
       <NativeTabs.Trigger name="index">
@@ -15,7 +19,18 @@ export default function TabLayout() {
       <NativeTabs.Trigger name="collections">
         <Label>Collections</Label>
         <Icon sf="rectangle.stack.fill" drawable="ic_menu_archive" />
-        <Badge>3</Badge>
+        {collectionsCount > 0 && (
+          <Badge>{collectionsCount.toString()}</Badge>
+        )}{" "}
+      </NativeTabs.Trigger>
+      <NativeTabs.Trigger name="likes">
+        <Label>Likes</Label>
+        <Icon sf="heart.fill" drawable="ic_menu_favorite" />
+        {likedPhotos.length > 0 && (
+          <Badge>
+            {likedPhotos.length > 99 ? "99+" : likedPhotos.length.toString()}
+          </Badge>
+        )}
       </NativeTabs.Trigger>
       <NativeTabs.Trigger name="settings">
         <Label>Settings</Label>

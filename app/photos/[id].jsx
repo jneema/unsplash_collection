@@ -30,15 +30,19 @@ import {
   createCollection,
   removeImageFromCollection,
 } from "../../api/unsplash_collection";
+import { toggleLikePhoto } from "../../store/appSlice";
+import { useDispatch, useSelector } from "react-redux";
 
 export default function PhotoDetail() {
   const router = useRouter();
+  const dispatch = useDispatch();
   const { id } = useLocalSearchParams();
   const { colorScheme } = useColorScheme();
   const isDark = colorScheme === "dark";
   const iconColor = isDark ? "#f1f5f9" : "#0f172a";
 
-  const [isLiked, setIsLiked] = useState(false);
+  const likedPhotos = useSelector((state) => state.app.likedPhotos);
+  const isLiked = likedPhotos.some((p) => p.unsplash_id === id || p.id === id);
   const [allCollections, setAllCollections] = useState([]);
   const [selectedIds, setSelectedIds] = useState(new Set());
   const [photo, setPhoto] = useState(null);
@@ -51,17 +55,17 @@ export default function PhotoDetail() {
     const initData = async () => {
       if (!id) return;
 
-      setLoading(true); 
+      setLoading(true);
       try {
         // Fetch everything in parallel
         const [photoData, myFolders, activeFolders] = await Promise.all([
           getPhotoDetails(id),
-          getCollections(), 
-          getCollectionsForPhoto(id), 
+          getCollections(),
+          getCollectionsForPhoto(id),
         ]);
 
         setPhoto(photoData);
-        setAllCollections(myFolders); 
+        setAllCollections(myFolders);
 
         setSelectedIds(new Set(activeFolders.map((c) => c.id)));
       } catch (err) {
@@ -227,8 +231,25 @@ export default function PhotoDetail() {
               </Text>
             </View>
             <Pressable
-              onPress={() => setIsLiked(!isLiked)}
-              className={`p-4 rounded-3xl border ${isLiked ? "bg-red-50 border-red-100 dark:bg-red-900/20 dark:border-red-900/30" : "bg-slate-50 dark:bg-slate-900 border-slate-100 dark:border-slate-800"}`}
+              onPress={() => {
+                // Prepare the photo object for Redux
+                const photoToSave = {
+                  id: photo.id,
+                  unsplash_id: photo.id,
+                  image_url: photo.urls.regular,
+                  description: photo.description || photo.alt_description,
+                  user: {
+                    name: photo.user.name,
+                    profile_image: photo.user.profile_image,
+                  },
+                };
+                dispatch(toggleLikePhoto(photoToSave));
+              }}
+              className={`p-4 rounded-3xl border ${
+                isLiked
+                  ? "bg-red-50 border-red-100 dark:bg-red-900/20 dark:border-red-900/30"
+                  : "bg-slate-50 dark:bg-slate-900 border-slate-100 dark:border-slate-800"
+              }`}
             >
               <Ionicons
                 name={isLiked ? "heart" : "heart-outline"}

@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
   Text,
   View,
@@ -124,70 +124,60 @@ export default function Collections() {
         contentContainerStyle={{ paddingHorizontal: 24 }}
         showsVerticalScrollIndicator={false}
       />
-
-      <Modal transparent={true} visible={modalVisible}>
-        <KeyboardAvoidingView
-          behavior={Platform.OS === "ios" ? "padding" : "height"}
-          className="flex-1 justify-end bg-black/60"
-        >
-          <View className="bg-white dark:bg-slate-900 rounded-[40px] p-8 pb-10 mx-4 mb-10 shadow-2xl relative border border-transparent dark:border-slate-800">
-            <TouchableOpacity
-              onPress={() => setModalVisible(false)}
-              className="absolute top-6 right-6 z-10 bg-slate-50 dark:bg-slate-800 p-2 rounded-full"
-            >
-              <Ionicons name="close" size={20} color="#94a3b8" />
-            </TouchableOpacity>
-
-            <View className="w-12 h-1 bg-slate-100 dark:bg-slate-800 rounded-full self-center mb-5" />
-
-            <View className="items-center mb-5">
-              <Text className="text-3xl font-black text-slate-900 dark:text-slate-50 tracking-tight">
+      <Modal visible={modalVisible} transparent animationType="fade">
+        <View className="flex-1 bg-black/60 justify-center px-6">
+          <KeyboardAvoidingView
+            behavior={Platform.OS === "ios" ? "padding" : "height"}
+            className="w-full"
+          >
+            <View className="w-full bg-white dark:bg-slate-900 rounded-[32px] p-8 shadow-2xl">
+              <Text className="text-2xl font-bold text-slate-900 dark:text-white mb-6">
                 Add Collection
               </Text>
+
+              <View className="relative w-full mb-6">
+                <View className="flex-row items-center bg-white dark:bg-slate-900 rounded-3xl px-5 py-1.5 border border-slate-200 dark:border-slate-800 shadow-lg shadow-slate-200/50 dark:shadow-none">
+                  <TextInput
+                    placeholder="Collection Name"
+                    placeholderTextColor="#94a3b8"
+                    className="flex-1 px-2 text-slate-800 dark:text-slate-100"
+                    value={newTitle}
+                    onChangeText={(text) => {
+                      setNewTitle(text);
+                      if (hasError) setHasError(false);
+                    }}
+                    style={{
+                      height: 52,
+                      fontSize: 17,
+                      fontWeight: "500",
+                      borderColor: hasError
+                        ? "#ef4444"
+                        : isFocused
+                          ? "#0f172a"
+                          : "#f1f5f9",
+                    }}
+                  />
+                </View>
+              </View>
+
+              <View className="flex-row justify-end items-center">
+                <TouchableOpacity
+                  onPress={() => setModalVisible(false)}
+                  className="px-6 py-3 mr-2"
+                >
+                  <Text className="text-slate-500 font-bold">Cancel</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  onPress={handleCreateCollection}
+                  className="bg-blue-600 px-8 py-3 rounded-2xl"
+                >
+                  <Text className="text-white font-bold text-lg">Save</Text>
+                </TouchableOpacity>
+              </View>
             </View>
-
-            <TextInput
-              placeholder="Title..."
-              placeholderTextColor="#94a3b8"
-              className="bg-slate-50 dark:bg-slate-800 px-5 py-6 rounded-2xl text-xl mb-8 text-slate-900 dark:text-slate-100 font-semibold border-1"
-              value={newTitle}
-              onChangeText={(text) => {
-                setNewTitle(text);
-                if (hasError) setHasError(false);
-              }}
-              onFocus={() => setIsFocused(true)}
-              onBlur={() => setIsFocused(false)}
-              autoFocus
-              style={{
-                height: 48,
-                fontSize: 18,
-                fontWeight: "600",
-                textAlignVertical: "center",
-                paddingTop: 0,
-                paddingBottom: 0,
-                includeFontPadding: false,
-                lineHeight: 22,
-                borderColor: hasError
-                  ? "#ef4444"
-                  : isFocused
-                    ? "#0f172a"
-                    : "#f1f5f9",
-                borderWidth: 1,
-              }}
-            />
-
-            <TouchableOpacity
-              onPress={handleCreateCollection}
-              activeOpacity={0.8}
-              className="bg-slate-900 dark:bg-blue-600 h-16 rounded-2xl items-center justify-center flex-row"
-            >
-              <Text className="text-white font-bold text-lg">
-                Create Collection
-              </Text>
-              <Ionicons name="add" size={20} color="white" />
-            </TouchableOpacity>
-          </View>
-        </KeyboardAvoidingView>
+          </KeyboardAvoidingView>
+        </View>
       </Modal>
     </SafeAreaView>
   );
