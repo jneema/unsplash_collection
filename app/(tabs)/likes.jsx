@@ -19,6 +19,7 @@ import { useSelector, useDispatch } from "react-redux";
 import { LinearGradient } from "expo-linear-gradient";
 import PhotoItem from "../../components/photo_item";
 import { toggleLikePhoto } from "../../store/appSlice";
+import * as Haptics from "expo-haptics";
 
 const { width } = Dimensions.get("window");
 const COLUMN_WIDTH = (width - 60) / 2;
@@ -37,6 +38,7 @@ export default function LikedPhotos() {
   const [showMenu, setShowMenu] = useState(false);
 
   const toggleSelection = (id) => {
+    Haptics.selectionAsync();
     setSelectedIds((prev) => {
       const next = new Set(prev);
       if (next.has(id)) next.delete(id);
@@ -89,6 +91,7 @@ export default function LikedPhotos() {
         isSelectionMode={isSelectionMode}
         isSelected={selectedIds.has(itemId)}
         onLongPress={() => {
+          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
           setIsSelectionMode(true);
           toggleSelection(itemId);
         }}
@@ -244,7 +247,7 @@ export default function LikedPhotos() {
         {/* Action Bar (Borrowed from Collections) */}
         {isSelectionMode && (
           <View
-            style={{ bottom: insets.bottom + 60 }}
+            style={{ bottom: insets.bottom + 90 }}
             className="absolute left-6 right-6 bg-slate-900 dark:bg-slate-800 h-16 rounded-3xl flex-row items-center justify-between px-6 shadow-2xl"
           >
             <Text className="text-white font-bold">

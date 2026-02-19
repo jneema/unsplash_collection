@@ -25,6 +25,9 @@ import {
   getCollectionImages,
 } from "../api/unsplash_collection";
 import NotFound from "../components/not_found";
+import { useDispatch, useSelector } from "react-redux";
+import { toggleLikePhoto } from "../store/appSlice";
+import * as Haptics from "expo-haptics";
 
 const { width } = Dimensions.get("window");
 const COLUMN_WIDTH = (width - 60) / 2;
@@ -35,6 +38,7 @@ export default function SearchScreen() {
   const params = useLocalSearchParams();
   const colorScheme = useColorScheme();
   const initialSearchDone = useRef(false);
+  const dispatch = useDispatch();
 
   const isDark = colorScheme === "dark";
 
@@ -51,6 +55,7 @@ export default function SearchScreen() {
   const [loadingMore, setLoadingMore] = useState(false);
   const [page, setPage] = useState(1);
   const [addedPhotos, setAddedPhotos] = useState(new Set());
+  const likedPhotos = useSelector((state) => state.app.likedPhotos);
 
   useEffect(() => {
     const syncAndSearch = async () => {
@@ -117,6 +122,7 @@ export default function SearchScreen() {
   const handlePhotoPress = async (photo) => {
     if (targetCollectionId) {
       try {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
         await addImageToCollection(targetCollectionId, {
           unsplash_id: photo.id,
           image_url: photo.urls.regular,
@@ -127,7 +133,8 @@ export default function SearchScreen() {
         console.error(err);
       }
     } else {
-      router.push(`/photos/${photo.id}`);
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      dispatch(toggleLikePhoto(photo));
     }
   };
 
@@ -261,7 +268,7 @@ export default function SearchScreen() {
             columnWrapperStyle={{ justifyContent: "space-between" }}
             renderItem={({ item }) => {
               const isAdded = addedPhotos.has(item.id);
-
+              const isLiked = likedPhotos.some((p) => p.id === item.id);
               return (
                 <TouchableOpacity
                   className="mb-4 relative"
@@ -274,17 +281,18 @@ export default function SearchScreen() {
                     className="rounded-[32px] bg-slate-100 dark:bg-slate-800"
                   />
 
-                  {targetCollectionId && (
-                    <View
-                      className="absolute top-4 right-4"
-                      style={{
-                        elevation: 5,
-                        shadowColor: "#000",
-                        shadowOffset: { width: 0, height: 2 },
-                        shadowOpacity: 0.2,
-                        shadowRadius: 4,
-                      }}
-                    >
+                  {/* ICON OVERLAY */}
+                  <View
+                    className="absolute top-4 right-4"
+                    style={{
+                      elevation: 5,
+                      shadowColor: "#000",
+                      shadowOffset: { width: 0, height: 2 },
+                      shadowOpacity: 0.2,
+                      shadowRadius: 4,
+                    }}
+                  >
+                    {targetCollectionId ? (
                       <View
                         className={`${isAdded ? "bg-green-500" : "bg-blue-600"} p-2.5 rounded-full`}
                       >
@@ -294,8 +302,18 @@ export default function SearchScreen() {
                           color="white"
                         />
                       </View>
-                    </View>
-                  )}
+                    ) : (
+                      <View
+                        className={`${isLiked ? "bg-rose-500" : "bg-black/20"} p-2.5 rounded-full`}
+                      >
+                        <Ionicons
+                          name={isLiked ? "heart" : "heart-outline"}
+                          size={18}
+                          color="white"
+                        />
+                      </View>
+                    )}
+                  </View>
                 </TouchableOpacity>
               );
             }}

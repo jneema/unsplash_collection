@@ -32,6 +32,7 @@ import {
 } from "../../api/unsplash_collection";
 import { toggleLikePhoto } from "../../store/appSlice";
 import { useDispatch, useSelector } from "react-redux";
+import * as Haptics from 'expo-haptics';
 
 export default function PhotoDetail() {
   const router = useRouter();
@@ -243,6 +244,7 @@ export default function PhotoDetail() {
                     profile_image: photo.user.profile_image,
                   },
                 };
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                 dispatch(toggleLikePhoto(photoToSave));
               }}
               className={`p-4 rounded-3xl border ${
