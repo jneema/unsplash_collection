@@ -8,6 +8,7 @@ import {
   useColorScheme,
   TouchableOpacity,
   Alert,
+  Platform,
 } from "react-native";
 import {
   SafeAreaView,
@@ -107,6 +108,9 @@ export default function LikedPhotos() {
       />
     );
   };
+
+  const bottomOffset =
+    Platform.OS === "ios" ? insets.bottom + 60 : insets.bottom + 90;
 
   return (
     <View className="flex-1 bg-white dark:bg-slate-950">
@@ -247,7 +251,7 @@ export default function LikedPhotos() {
         {/* Action Bar (Borrowed from Collections) */}
         {isSelectionMode && (
           <View
-            style={{ bottom: insets.bottom + 90 }}
+            style={{ bottom: bottomOffset }}
             className="absolute left-6 right-6 bg-slate-900 dark:bg-slate-800 h-16 rounded-3xl flex-row items-center justify-between px-6 shadow-2xl"
           >
             <Text className="text-white font-bold">
