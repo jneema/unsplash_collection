@@ -10,7 +10,7 @@ import {
   ActivityIndicator,
   Pressable,
   Keyboard,
-  useColorScheme, 
+  useColorScheme,
 } from "react-native";
 import {
   SafeAreaView,
@@ -59,7 +59,9 @@ export default function SearchScreen() {
         setIsSyncingCollection(true);
         try {
           const existingImages = await getCollectionImages(targetCollectionId);
-          currentIds = new Set(existingImages?.images?.map((img) => img.unsplash_id));
+          currentIds = new Set(
+            existingImages?.images?.map((img) => img.unsplash_id),
+          );
           setAddedPhotos(currentIds);
         } catch (err) {
           console.error(err);
@@ -160,7 +162,11 @@ export default function SearchScreen() {
                 onPress={handleBack}
                 className="bg-white/40 dark:bg-slate-800/40 active:bg-white/60 p-2 rounded-full"
               >
-                <Ionicons name="chevron-back" size={24} color={isDark ? "#f1f5f9" : "#1e293b"} />
+                <Ionicons
+                  name="chevron-back"
+                  size={24}
+                  color={isDark ? "#f1f5f9" : "#1e293b"}
+                />
               </Pressable>
               <Text className="text-4xl font-bold text-slate-900 dark:text-slate-50 tracking-tight">
                 Add to {collectionName || "Collection"}
@@ -181,7 +187,11 @@ export default function SearchScreen() {
           >
             {!targetCollectionId && (
               <TouchableOpacity onPress={handleBack} className="mr-2">
-                <Ionicons name="arrow-back" size={24} color={isDark ? "#64748b" : "#94a3b8"} />
+                <Ionicons
+                  name="arrow-back"
+                  size={24}
+                  color={isDark ? "#64748b" : "#94a3b8"}
+                />
               </TouchableOpacity>
             )}
             {committedQuery ? (
@@ -198,7 +208,11 @@ export default function SearchScreen() {
                       setResults([]);
                     }}
                   >
-                    <Ionicons name="close" size={16} color={isDark ? "#93c5fd" : "#1d4ed8"} />
+                    <Ionicons
+                      name="close"
+                      size={16}
+                      color={isDark ? "#93c5fd" : "#1d4ed8"}
+                    />
                   </TouchableOpacity>
                 </View>
               </View>
@@ -216,7 +230,11 @@ export default function SearchScreen() {
             )}
 
             <TouchableOpacity onPress={() => handleSearch(query)}>
-              <Ionicons name="search" size={24} color={isDark ? "#475569" : "#cbd5e1"} />
+              <Ionicons
+                name="search"
+                size={24}
+                color={isDark ? "#475569" : "#cbd5e1"}
+              />
             </TouchableOpacity>
           </View>
         </View>
@@ -225,7 +243,10 @@ export default function SearchScreen() {
       <View className="flex-1">
         {isLoading || isSyncingCollection ? (
           <View className="flex-1 justify-center items-center">
-            <ActivityIndicator size="large" color={isDark ? "#475569" : "#a6c1ee"} />
+            <ActivityIndicator
+              size="large"
+              color={isDark ? "#475569" : "#a6c1ee"}
+            />
           </View>
         ) : results.length > 0 ? (
           <FlatList

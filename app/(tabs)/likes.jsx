@@ -30,15 +30,11 @@ export default function LikedPhotos() {
   const dispatch = useDispatch();
   const isDark = colorScheme === "dark";
 
-  // Data from Redux
   const likedPhotos = useSelector((state) => state.app.likedPhotos);
 
-  // Selection States
   const [selectedIds, setSelectedIds] = useState(new Set());
   const [isSelectionMode, setIsSelectionMode] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
-
-  // --- Logic Borrowed from Collections ---
 
   const toggleSelection = (id) => {
     setSelectedIds((prev) => {

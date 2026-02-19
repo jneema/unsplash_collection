@@ -12,7 +12,6 @@ const PhotoItem = memo(
         className="mb-4 relative"
       >
         <Image
-
           source={{ uri: item.image_url }}
           style={{
             width: width,

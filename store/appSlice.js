@@ -1,10 +1,10 @@
-import { createSlice } from '@reduxjs/toolkit';
+import { createSlice } from "@reduxjs/toolkit";
 
 const appSlice = createSlice({
-  name: 'app',
+  name: "app",
   initialState: {
     collectionsCount: 0,
-    likedPhotos: [], 
+    likedPhotos: [],
   },
   reducers: {
     setCollectionsCount: (state, action) => {

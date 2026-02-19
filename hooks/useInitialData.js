@@ -1,7 +1,7 @@
-import { useEffect } from 'react';
-import { useDispatch } from 'react-redux';
-import { getCollections } from '../api/unsplash_collection';
-import { setCollectionsCount } from '../store/appSlice';
+import { useEffect } from "react";
+import { useDispatch } from "react-redux";
+import { getCollections } from "../api/unsplash_collection";
+import { setCollectionsCount } from "../store/appSlice";
 
 export const useInitialData = () => {
   const dispatch = useDispatch();

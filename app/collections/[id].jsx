@@ -27,12 +27,15 @@ import {
 } from "../../api/unsplash_collection";
 import { LinearGradient } from "expo-linear-gradient";
 import PhotoItem from "../../components/photo_item";
+import { useDispatch, useSelector } from "react-redux";
+import {setCollectionsCount} from "../../store/appSlice"
 
 const { width } = Dimensions.get("window");
 const COLUMN_WIDTH = (width - 60) / 2;
 
 export default function CollectionDetail() {
   const { id } = useLocalSearchParams();
+  const dispatch = useDispatch();
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const colorScheme = useColorScheme();
@@ -44,6 +47,7 @@ export default function CollectionDetail() {
   const [showMenu, setShowMenu] = useState(false);
   const [isRenameModalVisible, setIsRenameModalVisible] = useState(false);
   const [newName, setNewName] = useState("");
+  const collectionsCount = useSelector((state) => state.app.collectionsCount);
 
   const renderItem = ({ item }) => (
     <PhotoItem
@@ -136,6 +140,7 @@ export default function CollectionDetail() {
           style: "destructive",
           onPress: async () => {
             await deleteFullCollection(id);
+            dispatch(setCollectionsCount(collectionsCount - 1));
             router.replace("/collections");
           },
         },
@@ -256,7 +261,7 @@ export default function CollectionDetail() {
                             params: {
                               collectionId: id,
                               collectionName: collection?.name,
-                              query: collection?.name
+                              query: collection?.name,
                             },
                           });
                         }}
