@@ -1,9 +1,23 @@
 import axios from "axios";
+import { getAnonymousId } from "../utils/auth";
 
 const api = axios.create({
-  baseURL: "https://dutch-anjela-my-org-org-f52e9afe.koyeb.app",
+  baseURL: process.env.EXPO_PUBLIC_API_URL,
   headers: { "Content-Type": "application/json" },
 });
+
+api.interceptors.request.use(
+  async (config) => {
+    const anonId = await getAnonymousId();
+    if (anonId) {
+      config.headers["X-Anonymous-ID"] = anonId;
+    }
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  },
+);
 
 api.interceptors.response.use(
   (response) => response,
@@ -11,7 +25,7 @@ api.interceptors.response.use(
     console.log("NETWORK ERROR DETAIL:", {
       message: error.message,
       code: error.code,
-      config: error.config.url,
+      config: error.config?.url,
       response: error.response?.data,
     });
     return Promise.reject(error);
