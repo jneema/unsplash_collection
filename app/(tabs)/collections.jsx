@@ -64,8 +64,8 @@ export default function Collections() {
 
       const url = `/search?collectionId=${savedCollection.id}&collectionName=${encodeURIComponent(savedCollection.name)}&query=${encodeURIComponent(savedCollection.name)}`;
       router.push(url);
-    } catch (error) {
-      console.error(error);
+    } catch (err) {
+      console.error("Error creating collection:", err);
     }
   };
 
